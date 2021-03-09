@@ -67,12 +67,15 @@ https://doc.rust-lang.org/edition-guide/rust-2018/simd-for-faster-computing.html
 https://www.youtube.com/watch?v=tX4H_ctggYo
 https://enkimute.github.io/ganja.js/examples/coffeeshop.html#pga2d_points_and_lines
 
-http://terathon.com/blog/projective-geometric-algebra-done-right/
-http://terathon.com/blog/symmetries-in-projective-geometric-algebra/
-
 
 http://terathon.com/blog/
 http://mathfor3dgameprogramming.com/
+
+gpa
+https://github.com/enkimute/ganja.js
+http://terathon.com/blog/projective-geometric-algebra-done-right/
+http://terathon.com/blog/symmetries-in-projective-geometric-algebra/
+
 ## 
 
 we need imp opt traits : https://doc.rust-lang.org/std/ops/index.html
