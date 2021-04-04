@@ -2,17 +2,17 @@
 name = "jasmine"
 version = "0.1.0"
 authors = ["ifeuille"]
-edition = "2018"
+#edition = "2018"
 description = "Math lib for graphics impeletation in rust."
 homepage = "https://github.com/AliveEngine/jasmine-math.git"
 repository = "https://github.com/AliveEngine/jasmine-math.git"
 keywords = ["graphics", "Math"]
 license = "MPL-2.0"
-exclude = ["examples/**/*", "tests/**/*", "Cargo.lock", "target/**/*"]
+#exclude = ["examples/**/*", "tests/**/*", "Cargo.lock", "target/**/*"]
 readme = "README.md"
 
-[package.metadata.docs.rs]
-all-features = true
+#[package.metadata.docs.rs]
+#all-features = true
 
 [lib]
 name = "jasmine"
@@ -29,7 +29,7 @@ num-traits = "0.2"
 rand = { version = "0.8", features = ["small_rng"], optional = true }
 serde = { version = "1.0", features = ["serde_derive"], optional = true }
 # works only in rust toolchain up to 1.32, disabled indefinitely
-simd = { version = "0.2", optional = true }
+#simd = { version = "0.2", optional = true }
 
 [dev-dependencies]
 bytemuck = { version = "1.4", features = ["derive"] }
