@@ -190,6 +190,15 @@ macro_rules! impl_vector {
 
         impl<S: BaseNum> VectorSpace for $VectorN<S> {
             type Scalar = S;
+
+            // #[inline]
+            // fn floor(self) -> $VectorN<S> {
+            //     $VectorN { $($field: Scalar::floor(self.$field)),+ }
+            // }
+            // #[inline]
+            // fn ceil(self) -> $VectorN<S> {
+            //     $VectorN { $($field: self.$field),+ }
+            // }
         }
 
         impl<S: Neg<Output = S>> Neg for $VectorN<S> {
@@ -275,7 +284,8 @@ macro_rules! impl_vector {
 
         impl_operator!(<S: BaseNum> Mul<S> for $VectorN<S> {
             fn mul(vector, scalar) -> $VectorN<S> { $VectorN::new($(vector.$field * scalar),+) }
-        });
+        });    
+
         impl_assignment_operator!(<S: BaseNum> MulAssign<S> for $VectorN<S> {
             fn mul_assign(&mut self, scalar) { $(self.$field *= scalar);+ }
         });
@@ -505,6 +515,11 @@ impl<S: BaseNum> Vector4<S> {
     impl_swizzle_functions!(Vector1, Vector2, Vector3, Vector4, S, xyzw);
 }
 
+impl<S: BaseNum> Cross for Vector3<S> {
+    fn cross(self, other: Self) -> Self {
+        Vector3::new(self.y * other.z - self.z * other.y,self.z * other.x - self.x * other.z,self.x * other.y - self.y * other.x)
+    }
+}
 
 /// Dot product of two vectors.
 #[inline]
@@ -552,6 +567,26 @@ impl<S: BaseNum> InnerSpace for Vector3<S> {
         Rad::atan2(self.cross(other).magnitude(), Self::dot(self, other))
     }
 }
+
+/// wedge product for vector2 ^ vector2
+impl<S: BaseNum> BitXor for Vector2<S> {
+    type Output = S;
+
+    // rhs is the "right-hand side" of the expression `a ^ b`
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        self.x * rhs.y - self.y * rhs.x
+    }
+}
+
+/// wedge product for antivector3 ^ antivector3
+// impl<S: BaseNum> BitXor for Vector3<S> {
+//     type Output = S;
+
+//     // rhs is the "right-hand side" of the expression `a ^ b`
+//     fn bitxor(self, rhs: Self) -> Self::Output {
+//         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+//     }
+// }
 
 impl<S: BaseNum> InnerSpace for Vector4<S> {
     #[inline]

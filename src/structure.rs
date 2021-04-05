@@ -174,8 +174,12 @@ where
     fn lerp(self, other: Self, amount: Self::Scalar) -> Self {
         self + ((other - self) * amount)
     }
+
 }
 
+pub trait Cross {
+    fn cross(self, other: Self) -> Self ;
+}
 
 /// A type with a distance function between values.
 ///
@@ -235,6 +239,11 @@ where
         Self::dot(self, self)
     }
 
+    #[inline]
+    fn squared_mag(self) -> Self::Scalar {
+        Self::dot(self, self)
+    }
+
     /// Returns the angle between two vectors in radians.
     fn angle(self, other: Self) -> Rad<Self::Scalar>
     where
@@ -247,8 +256,13 @@ where
     /// [vector projection](https://en.wikipedia.org/wiki/Vector_projection)
     /// of the current inner space projected onto the supplied argument.
     #[inline]
-    fn project_on(self, other: Self) -> Self {
+    fn project(self, other: Self) -> Self {
         other * (self.dot(other) / other.magnitude2())
+    }
+
+    #[inline]
+    fn reject(self, other: Self) -> Self {
+        self - other * Self::dot(self, other)
     }
 
     /// The distance from the tail to the tip of the vector.
@@ -258,6 +272,14 @@ where
         Self::Scalar: Float,
     {
         Float::sqrt(self.magnitude2())
+    }
+
+    #[inline]
+    fn inverse_mag(self) -> Self::Scalar 
+    where
+        Self::Scalar: Float,
+    {
+        Self::Scalar::one() / Self::magnitude(self)
     }
 
     /// Returns a vector with the same direction, but with a magnitude of `1`.
@@ -790,4 +812,16 @@ where
     fn atan(ratio: Self::Unitless) -> Self;
 
     fn atan2(a: Self::Unitless, b: Self::Unitless) -> Self;
+}
+
+pub trait WedgeTrait<S, U, O>
+where 
+    S: BitXor
+{
+    fn wedge(self, other: U) -> O;
+}
+
+pub trait AntiwedgeTrait<S, U, O>
+{
+    fn anti_wedge(self, other: U) -> O;
 }

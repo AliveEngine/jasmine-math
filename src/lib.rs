@@ -82,8 +82,8 @@ pub use vector::{dot, vec1, vec2, vec3, vec4, Vector1, Vector2, Vector3, Vector4
 
 pub use angle::{Deg, Rad};
 pub use euler::Euler;
-//pub use point::{point1, point2, point3, Point1, Point2, Point3};
-
+pub use point::{point1, point2, point3, Point1, Point2, Point3};
+//pub use bivector3;
 
 // pub mod core;
 // pub mod math;
@@ -109,3 +109,7 @@ mod vector_simd;
 
 mod angle;
 mod euler;
+mod point;
+mod bivector3;
+
+mod algebra;
