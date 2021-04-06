@@ -1,7 +1,7 @@
 //! Generic algebraic structures
 
 use num_traits::{cast, Float};
-use std::cmp;
+use std::{cmp, process::Output};
 use std::iter;
 use std::ops::*;
 
@@ -814,14 +814,29 @@ where
     fn atan2(a: Self::Unitless, b: Self::Unitless) -> Self;
 }
 
-pub trait WedgeTrait<S, U, O>
+pub trait WedgeTrait<U, O>
 where 
-    S: BitXor
+    Self: BitXor<U, Output = O>,
 {
     fn wedge(self, other: U) -> O;
 }
 
-pub trait AntiwedgeTrait<S, U, O>
+pub trait AntiwedgeTrait<U, O>
+where 
+    Self: BitXor<U, Output = O>,
 {
     fn anti_wedge(self, other: U) -> O;
+}
+
+
+pub trait ProjectTrait{
+    type Other;
+    fn project(self, other: Self::Other) -> Self;
+}
+
+pub trait ComplementTrait<O>
+where 
+    Self: Not<Output = O>,
+{
+    fn complement(self) -> O;
 }

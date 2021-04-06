@@ -387,22 +387,22 @@ macro_rules! impl_mint_conversions {
 include!(concat!(env!("OUT_DIR"), "/swizzle_operator_macro.rs"));
 
 
-// macro_rules! impl_grassmann_wedge {
-//     ($T:ident, $U:ident, $O:ident) => {
-//         impl<S: BaseNum> WedgeTrait<$T<S>, $U<S>, $O<S>> for $T<S> {
-//             fn wedge(self, other: $U<S>) -> $O<S> {
-//                 self ^ other
-//             }
-//         }
-//     }
-// }
+macro_rules! impl_grassmann_wedge {
+    (<$S:ident: $Constraint:ident>, $Lhs:ty, $Rhs:ty, $Output: ty) => {
+        impl<$S: $Constraint> WedgeTrait<$Rhs, $Output> for $Lhs {
+            fn wedge(self, other: $Rhs) -> $Output {
+                self ^ other
+            }
+        }
+    };
+}
 
-// macro_rules! impl_grassmann_wedge {
-//     ($T:ty, $U:ty, $O:ty) => {
-//         impl WedgeTrait<$T, $U, $O> for $T {
-//             fn wedge(self, other: $U) -> $O {
-//                 self ^ other
-//             }
-//         }
-//     }
-// }
+macro_rules! impl_grassmann_antiwedge {
+    (<$S:ident: $Constraint:ident>, $Lhs:ty, $Rhs:ty, $Output: ty) => {
+        impl<$S: $Constraint> AntiwedgeTrait<$Rhs, $Output> for $Lhs {
+            fn anti_wedge(self, other: $Rhs) -> $Output {
+                self ^ other
+            }
+        }
+    };
+}

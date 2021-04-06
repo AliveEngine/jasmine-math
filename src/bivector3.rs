@@ -1,3 +1,4 @@
+//use mint::Vector3;
 use num_traits::{Bounded, Float, NumCast};
 #[cfg(feature = "rand")]
 use rand::{
@@ -102,33 +103,74 @@ impl<S: BaseFloat> Bivector3<S>
         Bivector3{ x: f(self.x, v2.x), y: f(self.y, v2.y), z: f(self.z, v2.z) }
     }
 
+    #[inline]
+    fn dot(self, other: Bivector3<S>) -> S {
+        self.x * other.x + self.y * other.y + self.z * other.z
+    }
+
+    #[inline]
+    fn magnitude(self) -> S
+    where
+        S: Float,
+    {
+        Float::sqrt(self.magnitude2())
+    }
+
+    #[inline]
+    fn magnitude2(self) -> S {
+        Self::dot(self, self)
+    }
+
+    #[inline]
+    fn inverse_mag(self) -> S 
+    where
+        S: Float+One
+    {
+        S::one() / Self::magnitude(self)
+    }
+
+    #[inline]
+    fn normalize(self) -> Bivector3<S> {
+        self * self.inverse_mag()
+    }
+
 }
 
-// impl<S: BaseNum> Zero for Bivector3<S> {
-//     #[inline]
-//     fn zero() -> Bivector3<S> {
-//         Bivector3::from_value(S::zero())
-//     }
+impl<S:BaseNum> ProjectTrait for Vector3<S> {
+    type Other = Bivector3<S>;
+    fn project(self, other: Self::Other) -> Self {
+        ((!other) ^ self) ^ other
+    }
+}
 
-//     #[inline]
-//     fn is_zero(&self) -> bool {
-//         *self == Bivector3::zero()
-//     }
-// }
+impl<S:BaseNum> Not for Bivector3<S> {
+    type Output = Vector3<S>;
 
-// impl<S: BaseNum> iter::Sum<Bivector3<S>> for Bivector3<S> {
-//     #[inline]
-//     fn sum<I: Iterator<Item=Bivector3<S>>>(iter: I) -> Bivector3<S> {
-//         iter.fold(Bivector3::zero(), Add::add)
-//     }
-// }
+    fn not(self) -> Vector3<S> {
+        Vector3{x: self.x, y : self.y, z: self.z} 
+    }
+}
 
-// impl<'a, S: 'a + BaseNum> iter::Sum<&'a Bivector3<S>> for Bivector3<S> {
-//     #[inline]
-//     fn sum<I: Iterator<Item=&'a Bivector3<S>>>(iter: I) -> Bivector3<S> {
-//         iter.fold(Bivector3::zero(), Add::add)
-//     }
-// }
+impl<S:BaseNum> Not for Vector3<S> {
+    type Output = Bivector3<S>;
+
+    fn not(self) -> Bivector3<S> {
+        Bivector3{x: self.x, y : self.y, z: self.z} 
+    }
+}
+
+impl<S:BaseNum> ComplementTrait<Vector3<S>> for Bivector3<S> {
+    fn complement(self) -> Vector3<S> {
+        Vector3{x: self.x, y: self.y, z: self.z}
+    }
+}
+
+impl<S:BaseNum> ComplementTrait<Bivector3<S>> for Vector3<S> {
+    fn complement(self) -> Bivector3<S> {
+        Bivector3{x: self.x, y: self.y, z: self.z}
+    }
+}
+
 impl_operator!(<S: BaseNum> Add<Bivector3<S> > for Bivector3<S> {
     fn add(lhs, rhs) -> Bivector3<S> { Bivector3{x:lhs.x + rhs.x, y: lhs.y + rhs.y, z: lhs.z + rhs.z}}
 });
@@ -168,15 +210,25 @@ impl_assignment_operator!(<S: BaseNum> DivAssign<S> for Bivector3<S> {
     fn div_assign(&mut self, scalar) { self.x/= scalar; self.y /= scalar; self.z /= scalar;}
 });
 
-impl_operator!(<S: BaseNum> BitXor<Vector3<S> > for Vector3<S> {
-    fn bitxor(a, b) -> Bivector3<S> { 
+impl<S:BaseNum> BitXor<Vector3<S>> for Vector3<S> {
+    type Output = Bivector3<S>;
+    fn bitxor(self, b: Vector3<S>) -> Bivector3<S> { 
         Bivector3{
-            x: a.y * b.z - a.z * b.y, 
-            y: a.z * b.x - a.x * b.z, 
-            z: a.x * b.y - a.y * b.x
+            x: self.y * b.z - self.z * b.y, 
+            y: self.z * b.x - self.x * b.z, 
+            z: self.x * b.y - self.y * b.x
         }
     }
-});
+}
+// impl_operator!(<S: BaseNum> BitXor<Vector3<S> > for Vector3<S> {
+//     fn bitxor(a, b) -> Bivector3<S> { 
+//         Bivector3{
+//             x: a.y * b.z - a.z * b.y, 
+//             y: a.z * b.x - a.x * b.z, 
+//             z: a.x * b.y - a.y * b.x
+//         }
+//     }
+// });
 
 impl_operator!(<S: BaseNum> BitXor<Point2<S> > for Point2<S> {
     fn bitxor(p, q) -> Bivector3<S> {
@@ -199,8 +251,8 @@ impl_operator!(<S:BaseFloat> BitXor<Vector2<S> > for Point2<S> {
 });
 
 impl_operator!(<S:BaseNum> BitXor<Bivector3<S> > for Bivector3<S> {
-    fn bitxor(a, b) -> Bivector3<S> {
-        Bivector3{
+    fn bitxor(a, b) -> Vector3<S> {
+        Vector3{
             x: a.y * b.z - a.z * b.y,
             y: a.z * b.x - a.x * b.z,
             z: a.x * b.y - a.y * b.x
@@ -220,28 +272,12 @@ impl_operator!(<S:BaseNum> BitXor<Bivector3<S> > for Vector3<S> {
     }
 });
 
-
-impl<S:BaseNum> WedgeTrait<Vector3<S>, Vector3<S>, Bivector3<S>> for Vector3<S> {
-    fn wedge(self, other: Self) -> Bivector3<S> {
-        self ^ other
-    }
-}
-
-impl<S:BaseNum> WedgeTrait<Point2<S>, Point2<S>, Bivector3<S>> for Point2<S> {
-    fn wedge(self, other: Self) -> Bivector3<S> {
-        self ^ other
-    }
-}
-
-impl<S:BaseFloat> WedgeTrait<Point2<S>, Vector2<S>, Bivector3<S>> for Point2<S> {
-    fn wedge(self, other: Vector2<S>) -> Bivector3<S> {
-        self ^ other
-    }
-}
-
-//impl_grassmann_wedge! (Point2, Vector2, Bivector3);
+impl_grassmann_wedge! (<S:BaseNum>, Vector3<S>, Vector3<S>, Bivector3<S>);
+impl_grassmann_wedge! (<S:BaseNum>, Point2<S>, Point2<S>, Bivector3<S>);
+impl_grassmann_wedge! (<S:BaseFloat>, Point2<S>, Vector2<S>, Bivector3<S>);
 
 
-
-
+impl_grassmann_antiwedge! (<S:BaseNum>, Bivector3<S>, Bivector3<S>, Vector3<S>);
+impl_grassmann_antiwedge! (<S:BaseNum>, Bivector3<S>, Vector3<S>, S);
+impl_grassmann_antiwedge! (<S:BaseNum>, Vector3<S>, Bivector3<S>, S);
 
