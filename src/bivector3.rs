@@ -34,40 +34,216 @@ pub struct Bivector3<S> {
 }
 
 macro_rules! impl_scalar_ops {
-    ($VectorN:ident<$S:ident>) => {
+    ($VectorN:ident<$S:ident> { $($field:ident),+ }) => {
         impl_operator!(Mul<$VectorN<$S>> for $S {
-            fn mul(scalar, vector) -> $VectorN<$S> { $VectorN{x:scalar * vector.x, y:scalar * vector.y, z:scalar * vector.z} }
+            fn mul(scalar, vector) -> $VectorN<$S> { $VectorN::new($(scalar * vector.$field),+) }
         });
         impl_operator!(Div<$VectorN<$S>> for $S {
-            fn div(scalar, vector) -> $VectorN<$S> { $VectorN{x:scalar / vector.x, y:scalar / vector.y, z:scalar / vector.z} }
+            fn div(scalar, vector) -> $VectorN<$S> { $VectorN::new($(scalar / vector.$field),+) }
         });
         impl_operator!(Rem<$VectorN<$S>> for $S {
-            fn rem(scalar, vector) -> $VectorN<$S> { $VectorN{x:scalar % vector.x, y:scalar % vector.y, z:scalar % vector.z} }
+            fn rem(scalar, vector) -> $VectorN<$S> { $VectorN::new($(scalar % vector.$field),+) }
         });
-
     };
 }
 
-impl_scalar_ops!(Bivector3<usize>);
-impl_scalar_ops!(Bivector3<u8>);
-impl_scalar_ops!(Bivector3<u16>);
-impl_scalar_ops!(Bivector3<u32>);
-impl_scalar_ops!(Bivector3<u64>);
-impl_scalar_ops!(Bivector3<isize>);
-impl_scalar_ops!(Bivector3<i8>);
-impl_scalar_ops!(Bivector3<i16>);
-impl_scalar_ops!(Bivector3<i32>);
-impl_scalar_ops!(Bivector3<i64>);
-impl_scalar_ops!(Bivector3<f32>);
-impl_scalar_ops!(Bivector3<f64>);
+macro_rules! impl_bivector3 {
+    ($VectorN:ident { $($field:ident),+ }, $n:expr, $constructor:ident) => {
+        impl<S> $VectorN<S> {
+            /// Construct a new vector, using the provided values.
+            #[inline]
+            pub const fn new($($field: S),+) -> $VectorN<S> {
+                $VectorN { $($field: $field),+ }
+            }
+
+            /// Perform the given operation on each field in the vector, returning a new point
+            /// constructed from the operations.
+            #[inline]
+            pub fn map<U, F>(self, mut f: F) -> $VectorN<U>
+                where F: FnMut(S) -> U
+            {
+                $VectorN { $($field: f(self.$field)),+ }
+            }
+
+            /// Construct a new vector where each component is the result of
+            /// applying the given operation to each pair of components of the
+            /// given vectors.
+            #[inline]
+            pub fn zip<S2, S3, F>(self, v2: $VectorN<S2>, mut f: F) -> $VectorN<S3>
+                where F: FnMut(S, S2) -> S3
+            {
+                $VectorN { $($field: f(self.$field, v2.$field)),+ }
+            }
+        }
+
+       /// The short constructor.
+       #[inline]
+       pub const fn $constructor<S>($($field: S),+) -> $VectorN<S> {
+           $VectorN::new($($field),+)
+       }
+
+       impl<S: NumCast + Copy> $VectorN<S> {
+            /// Component-wise casting to another type.
+            #[inline]
+            pub fn cast<T: NumCast>(&self) -> Option<$VectorN<T>> {
+                $(
+                    let $field = match NumCast::from(self.$field) {
+                        Some(field) => field,
+                        None => return None
+                    };
+                )+
+                Some($VectorN { $($field),+ })
+            }
+        }
+
+        impl<S: Copy> Array for $VectorN<S> {
+            type Element = S;
+
+            #[inline]
+            fn len() -> usize {
+                $n
+            }
+
+            #[inline]
+            fn from_value(scalar: S) -> $VectorN<S> {
+                $VectorN { $($field: scalar),+ }
+            }
+
+            #[inline]
+            fn sum(self) -> S where S: Add<Output = S> {
+                fold_array!(add, { $(self.$field),+ })
+            }
+
+            #[inline]
+            fn product(self) -> S where S: Mul<Output = S> {
+                fold_array!(mul, { $(self.$field),+ })
+            }
+
+            fn is_finite(&self) -> bool where S: Float {
+                $(self.$field.is_finite())&&+
+            }
+        }
+
+        impl<S: Bounded> Bounded for $VectorN<S> {
+            #[inline]
+            fn min_value() -> $VectorN<S> {
+                $VectorN { $($field: S::min_value()),+ }
+            }
+
+            #[inline]
+            fn max_value() -> $VectorN<S> {
+                $VectorN { $($field: S::max_value()),+ }
+            }
+        }
+
+
+        impl<S: BaseNum> iter::Sum<$VectorN<S>> for $VectorN<S> {
+            #[inline]
+            fn sum<I: Iterator<Item=$VectorN<S>>>(iter: I) -> $VectorN<S> {
+                iter.fold($VectorN::zero(), Add::add)
+            }
+        }
+
+        impl<'a, S: 'a + BaseNum> iter::Sum<&'a $VectorN<S>> for $VectorN<S> {
+            #[inline]
+            fn sum<I: Iterator<Item=&'a $VectorN<S>>>(iter: I) -> $VectorN<S> {
+                iter.fold($VectorN::zero(), Add::add)
+            }
+        }
+
+        impl<S: BaseFloat> approx::AbsDiffEq for $VectorN<S> {
+            type Epsilon = S::Epsilon;
+
+            #[inline]
+            fn default_epsilon() -> S::Epsilon {
+                S::default_epsilon()
+            }
+
+            #[inline]
+            fn abs_diff_eq(&self, other: &Self, epsilon: S::Epsilon) -> bool {
+                $(S::abs_diff_eq(&self.$field, &other.$field, epsilon))&&+
+            }
+        }
+
+        impl<S: BaseFloat> approx::RelativeEq for $VectorN<S> {
+            #[inline]
+            fn default_max_relative() -> S::Epsilon {
+                S::default_max_relative()
+            }
+
+            #[inline]
+            fn relative_eq(&self, other: &Self, epsilon: S::Epsilon, max_relative: S::Epsilon) -> bool {
+                $(S::relative_eq(&self.$field, &other.$field, epsilon, max_relative))&&+
+            }
+        }
+
+        impl<S: BaseFloat> approx::UlpsEq for $VectorN<S> {
+            #[inline]
+            fn default_max_ulps() -> u32 {
+                S::default_max_ulps()
+            }
+
+            #[inline]
+            fn ulps_eq(&self, other: &Self, epsilon: S::Epsilon, max_ulps: u32) -> bool {
+                $(S::ulps_eq(&self.$field, &other.$field, epsilon, max_ulps))&&+
+            }
+        }
+
+        #[cfg(feature = "rand")]
+        impl<S> Distribution<$VectorN<S>> for Standard
+            where Standard: Distribution<S>,
+                S: BaseFloat {
+            #[inline]
+            fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> $VectorN<S> {
+                $VectorN { $($field: rng.gen()),+ }
+            }
+        }
+
+
+        impl<S: BaseNum> ElementWise for $VectorN<S> {
+            #[inline] default_fn!( add_element_wise(self, rhs: $VectorN<S>) -> $VectorN<S> { $VectorN::new($(self.$field + rhs.$field),+) } );
+            #[inline] default_fn!( sub_element_wise(self, rhs: $VectorN<S>) -> $VectorN<S> { $VectorN::new($(self.$field - rhs.$field),+) } );
+            #[inline] default_fn!( mul_element_wise(self, rhs: $VectorN<S>) -> $VectorN<S> { $VectorN::new($(self.$field * rhs.$field),+) } );
+            #[inline] default_fn!( div_element_wise(self, rhs: $VectorN<S>) -> $VectorN<S> { $VectorN::new($(self.$field / rhs.$field),+) } );
+            #[inline] fn rem_element_wise(self, rhs: $VectorN<S>) -> $VectorN<S> { $VectorN::new($(self.$field % rhs.$field),+) }
+
+            #[inline] default_fn!( add_assign_element_wise(&mut self, rhs: $VectorN<S>) { $(self.$field += rhs.$field);+ } );
+            #[inline] default_fn!( sub_assign_element_wise(&mut self, rhs: $VectorN<S>) { $(self.$field -= rhs.$field);+ } );
+            #[inline] default_fn!( mul_assign_element_wise(&mut self, rhs: $VectorN<S>) { $(self.$field *= rhs.$field);+ } );
+            #[inline] default_fn!( div_assign_element_wise(&mut self, rhs: $VectorN<S>) { $(self.$field /= rhs.$field);+ } );
+            #[inline] fn rem_assign_element_wise(&mut self, rhs: $VectorN<S>) { $(self.$field %= rhs.$field);+ }
+        }
+
+
+        impl_scalar_ops!($VectorN<usize> { $($field),+ });
+        impl_scalar_ops!($VectorN<u8> { $($field),+ });
+        impl_scalar_ops!($VectorN<u16> { $($field),+ });
+        impl_scalar_ops!($VectorN<u32> { $($field),+ });
+        impl_scalar_ops!($VectorN<u64> { $($field),+ });
+        impl_scalar_ops!($VectorN<isize> { $($field),+ });
+        impl_scalar_ops!($VectorN<i8> { $($field),+ });
+        impl_scalar_ops!($VectorN<i16> { $($field),+ });
+        impl_scalar_ops!($VectorN<i32> { $($field),+ });
+        impl_scalar_ops!($VectorN<i64> { $($field),+ });
+        impl_scalar_ops!($VectorN<f32> { $($field),+ });
+        impl_scalar_ops!($VectorN<f64> { $($field),+ });
+
+        impl_index_operators!($VectorN<S>, $n, S, usize);
+        impl_index_operators!($VectorN<S>, $n, [S], Range<usize>);
+        impl_index_operators!($VectorN<S>, $n, [S], RangeTo<usize>);
+        impl_index_operators!($VectorN<S>, $n, [S], RangeFrom<usize>);
+        impl_index_operators!($VectorN<S>, $n, [S], RangeFull);
+       
+    };
+}
+
+
+impl_bivector3!(Bivector3 { x, y, z }, 3, bivec3);
+impl_fixed_array_conversions!(Bivector3<S> {x: 0, y: 0, z: 0 }, 3);
+impl_tuple_conversions!(Bivector3<S> { x, y, z }, (S, S, S));
 
 impl<S: BaseFloat> Bivector3<S> 
 {
-    /// Construct a new vector, using the provided values.
-    #[inline]
-    pub fn new(a: S, b: S, d: S) -> Bivector3<S> {
-        Bivector3 { x: a, y: b, z: d }
-    }
 
     #[inline]
     pub fn from_points(p: Point2<S>, q: Point2<S>) -> Bivector3<S> {
@@ -82,25 +258,6 @@ impl<S: BaseFloat> Bivector3<S>
     #[inline]
     pub fn set(&mut self, a: S, b: S, c: S) {
         self.x = a; self.y = b; self.z = c;
-    }
-
-    /// Perform the given operation on each field in the vector, returning a new point
-    /// constructed from the operations.
-    #[inline]
-    pub fn map<U, F>(self, mut f: F) -> Bivector3<U>
-        where F: FnMut(S) -> U
-    {
-        Bivector3{ x: f(self.x), y: f(self.y), z: f(self.z) }
-    }
-
-    /// Construct a new vector where each component is the result of
-    /// applying the given operation to each pair of components of the
-    /// given vectors.
-    #[inline]
-    pub fn zip<S2, S3, F>(self, v2: Bivector3<S2>, mut f: F) -> Bivector3<S3>
-        where F: FnMut(S, S2) -> S3
-    {
-        Bivector3{ x: f(self.x, v2.x), y: f(self.y, v2.y), z: f(self.z, v2.z) }
     }
 
     #[inline]
@@ -136,10 +293,15 @@ impl<S: BaseFloat> Bivector3<S>
 
 }
 
-impl<S:BaseNum> ProjectTrait for Vector3<S> {
-    type Other = Bivector3<S>;
-    fn project(self, other: Self::Other) -> Self {
-        ((!other) ^ self) ^ other
+impl<S: BaseNum> Zero for Bivector3<S> {
+    #[inline]
+    fn zero() -> Bivector3<S> {
+        Bivector3::from_value(S::zero())
+    }
+
+    #[inline]
+    fn is_zero(&self) -> bool {
+        *self == Bivector3::zero()
     }
 }
 
