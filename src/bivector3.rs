@@ -15,7 +15,7 @@ use structure::*;
 use angle::Rad;
 use approx;
 use num::{BaseFloat, BaseNum};
-use point::{Point2};
+use point::{Point2, Point3};
 use vector::{Vector2, Vector3};
 
 #[cfg(feature = "mint")]
@@ -242,7 +242,7 @@ impl_bivector3!(Bivector3 { x, y, z }, 3, bivec3);
 impl_fixed_array_conversions!(Bivector3<S> {x: 0, y: 0, z: 0 }, 3);
 impl_tuple_conversions!(Bivector3<S> { x, y, z }, (S, S, S));
 
-impl<S: BaseFloat> Bivector3<S> 
+impl<S: BaseNum> Bivector3<S> 
 {
 
     #[inline]
@@ -251,8 +251,44 @@ impl<S: BaseFloat> Bivector3<S>
     }
 
     #[inline]
-    pub fn point_vector(p: Point2<S>, v: Vector2<S>) -> Bivector3<S> {
+    pub fn point_vector(p: Point2<S>, v: Vector2<S>) -> Bivector3<S> 
+    where
+        S: Neg<Output = S> + BaseFloat + Zero +  One 
+    {
         Bivector3{x: -v.y,y: v.x,z: p.x * v.y - p.y * v.x}
+    }
+
+    #[inline]
+    pub fn yz_unit() -> Bivector3<S> { Bivector3::new(S::one(), S::zero(), S::zero()) }
+
+    #[inline]
+    pub fn zx_unit() -> Bivector3<S> { Bivector3::new(S::zero(), S::one(), S::zero()) }
+
+    #[inline]
+    pub fn xy_unit() -> Bivector3<S> { Bivector3::new(S::zero(), S::zero(), S::one()) }
+    
+    #[inline]
+    pub fn minus_yz_unit() -> Bivector3<S>
+    where
+        S: Neg<Output = S> + BaseFloat + Zero +  One 
+    { 
+        Bivector3::new(-S::one(), S::zero(), S::zero())
+    }
+
+    #[inline]
+    pub fn minus_zx_unit() -> Bivector3<S>
+    where
+        S: Neg<Output = S> + BaseFloat + Zero +  One
+    { 
+        Bivector3::new(S::zero(), -S::one(), S::zero())
+     }
+
+    #[inline]
+    pub fn minus_xy_unit() -> Bivector3<S> 
+    where
+        S: Neg<Output = S> + BaseFloat + Zero +  One 
+    {
+        Bivector3::new(S::zero(), S::zero(), -S::one()) 
     }
 
     #[inline]
@@ -270,7 +306,7 @@ impl<S: BaseFloat> Bivector3<S>
     where
         S: Float,
     {
-        Float::sqrt(self.magnitude2())
+        S::sqrt(self.magnitude2())
     }
 
     #[inline]
@@ -281,14 +317,17 @@ impl<S: BaseFloat> Bivector3<S>
     #[inline]
     fn inverse_mag(self) -> S 
     where
-        S: Float+One
+        S: Neg<Output = S> + BaseFloat + Zero +  One 
     {
         S::one() / Self::magnitude(self)
     }
 
     #[inline]
-    fn normalize(self) -> Bivector3<S> {
-        self * self.inverse_mag()
+    fn normalize(self) -> Bivector3<S> 
+    where
+        S: Neg<Output = S> + BaseFloat + Zero +  One 
+    {
+        self * Self::inverse_mag(self)
     }
 
 }
@@ -428,6 +467,12 @@ impl_operator!(<S:BaseNum> BitXor<Vector3<S> > for Bivector3<S> {
     }
 });
 
+impl_operator!(<S:BaseNum> BitXor<Point3<S> > for Bivector3<S> {
+    fn bitxor(a, b) -> S {
+        a.x * b.x + a.y + b.y + a.z * b.z
+    }
+});
+
 impl_operator!(<S:BaseNum> BitXor<Bivector3<S> > for Vector3<S> {
     fn bitxor(a, b) -> S {
         a.x * b.x + a.y + b.y + a.z * b.z
@@ -443,3 +488,8 @@ impl_grassmann_antiwedge! (<S:BaseNum>, Bivector3<S>, Bivector3<S>, Vector3<S>);
 impl_grassmann_antiwedge! (<S:BaseNum>, Bivector3<S>, Vector3<S>, S);
 impl_grassmann_antiwedge! (<S:BaseNum>, Vector3<S>, Bivector3<S>, S);
 
+impl<S: Mul<Output = S> + Sub<Output = S> + Copy> Cross<Self, Bivector3<S>> for Point3<S> {
+    fn cross(self, q: &Self) -> Bivector3<S> {
+        Bivector3::new(self.y * q.z - self.z * q.y, self.z * q.x - self.x * q.z, self.x * q.y - self.y * q.x)
+    }
+}

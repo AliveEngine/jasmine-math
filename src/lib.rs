@@ -85,6 +85,7 @@ pub use euler::Euler;
 pub use point::{point1, point2, point3, Point1, Point2, Point3};
 pub use bivector3::{bivec3, Bivector3};
 pub use bivector4::{bivec4, Bivector4};
+pub use trivector4::{trivec4, Trivector4};
 
 //pub use bivector3;
 
@@ -115,5 +116,7 @@ mod euler;
 mod point;
 mod bivector3;
 mod bivector4;
+mod trivector4;
 
 mod algebra;
+

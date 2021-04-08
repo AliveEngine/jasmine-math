@@ -177,8 +177,8 @@ where
 
 }
 
-pub trait Cross {
-    fn cross(self, other: Self) -> Self ;
+pub trait Cross<U, O> {
+    fn cross(self, other: &U) -> O ;
 }
 
 /// A type with a distance function between values.
@@ -829,9 +829,12 @@ where
 }
 
 
-pub trait ProjectTrait{
-    type Other;
-    fn project(self, other: Self::Other) -> Self;
+pub trait ProjectTrait<U>{
+    fn project(self, other: U) -> Self;
+}
+
+pub trait AntiprojectTrait<U>{
+    fn anti_project(self, other: U) -> Self;
 }
 
 pub trait ComplementTrait<O>

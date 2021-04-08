@@ -13,6 +13,8 @@ use vector::{Vector1, Vector2, Vector3, Vector4};
 #[cfg(feature = "mint")]
 use mint;
 
+use crate::Bivector3;
+
 #[repr(C)]
 #[derive(PartialEq, Eq, Copy, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -47,6 +49,10 @@ impl<S: BaseNum> Point3<S> {
     #[inline]
     pub fn to_homogeneous(self) -> Vector4<S> {
         Vector4::new(self.x, self.y, self.z, S::one())
+    }
+    #[inline]
+    pub fn to_vec3(self) -> Vector3<S> {
+        Vector3::new(self.x , self.y, self.z)
     }
 }
 
@@ -228,7 +234,6 @@ macro_rules! impl_point {
         impl_operator!(<S: BaseNum> Sub<$PointN<S> > for $PointN<S> {
             fn sub(lhs, rhs) -> $VectorN<S> { $VectorN::new($(lhs.$field - rhs.$field),+) }
         });
-
         impl_operator!(<S: BaseNum> Mul<S> for $PointN<S> {
             fn mul(point, scalar) -> $PointN<S> { $PointN::new($(point.$field * scalar),+) }
         });
@@ -344,7 +349,6 @@ impl_tuple_conversions!(Point3<S> { x, y, z }, (S, S, S));
 impl_mint_conversions!(Point2 { x, y }, Point2);
 #[cfg(feature = "mint")]
 impl_mint_conversions!(Point3 { x, y, z }, Point3);
-
 
 
 impl<S: fmt::Debug> fmt::Debug for Point1<S> {

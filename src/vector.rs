@@ -14,6 +14,7 @@ use structure::*;
 use angle::Rad;
 use approx;
 use num::{BaseFloat, BaseNum};
+use point::{Point1, Point2, Point3};
 
 #[cfg(feature = "mint")]
 use mint;
@@ -101,6 +102,10 @@ macro_rules! impl_vector {
                 where F: FnMut(S, S2) -> S3
             {
                 $VectorN { $($field: f(self.$field, v2.$field)),+ }
+            }
+
+            pub fn set(mut self, $($field: S),+) {
+                $(self.$field = $field);+
             }
         }
 
@@ -422,7 +427,6 @@ impl<S: BaseNum> Vector2<S> {
     impl_swizzle_functions!(Vector1, Vector2, Vector3, Vector4, S, xy);
 }
 
-
 impl<S: BaseNum> Vector3<S> {
     /// A unit vector in the `x` direction.
     #[inline]
@@ -515,8 +519,8 @@ impl<S: BaseNum> Vector4<S> {
     impl_swizzle_functions!(Vector1, Vector2, Vector3, Vector4, S, xyzw);
 }
 
-impl<S: BaseNum> Cross for Vector3<S> {
-    fn cross(self, other: Self) -> Self {
+impl<S: BaseNum> Cross<Self, Self> for Vector3<S> {
+    fn cross(self, other: &Self) -> Self {
         Vector3::new(self.y * other.z - self.z * other.y,self.z * other.x - self.x * other.z,self.x * other.y - self.y * other.x)
     }
 }
