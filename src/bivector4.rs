@@ -129,6 +129,14 @@ impl<S: BaseNum> Bivector4<S> {
     }
 }
 
+impl<'a, S:BaseFloat> Bivector4<S> {
+    pub fn unitize(&'a mut self) -> &'a Bivector4<S> 
+    {
+        *self *= self.direction.inverse_mag();
+        self
+    }
+}
+
 impl<S: BaseNum> MulAssign<S> for Bivector4<S> {
     fn mul_assign(&mut self, scalar: S) {
         self.direction *= scalar;
@@ -138,6 +146,9 @@ impl<S: BaseNum> MulAssign<S> for Bivector4<S> {
 
 impl<S: BaseNum> DivAssign<S> for Bivector4<S> {
     fn div_assign(&mut self, scalar: S) {
-        
+        let s = S::one() / scalar;
+        self.direction *= s;
+        self.moment *= s;
+
     }
 }
