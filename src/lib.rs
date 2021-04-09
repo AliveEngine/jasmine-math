@@ -50,6 +50,7 @@
 //! use cgmath::prelude::*;
 //! ```
 
+#![allow(dead_code)]
 
 #![cfg_attr(feature = "simd", feature(specialization))]
 
@@ -87,6 +88,7 @@ pub use bivector3::{bivec3, Bivector3};
 pub use bivector4::{bivec4, Bivector4};
 pub use trivector4::{trivec4, Trivector4};
 
+
 //pub use bivector3;
 
 // pub mod core;
@@ -117,6 +119,7 @@ mod point;
 mod bivector3;
 mod bivector4;
 mod trivector4;
+mod matrix;
 
 mod algebra;
 

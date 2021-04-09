@@ -843,3 +843,55 @@ where
 {
     fn complement(self) -> O;
 }
+
+
+/// Generic Matrix type.
+pub trait GenMat
+<
+S: BaseFloat,
+C//: GenFloatVec<S>
+>
+: Sized
++ Zero
++ Add<Output = Self>
++ Sub<Output = Self>
++ Div<Output = Self>
++ Rem<Output = Self>
++ Neg<Output = Self>
++ Mul<S, Output = Self>
++ Index<usize, Output = C>
++ IndexMut<usize>
+//+ ApproxEq<BaseType = S>
+{
+    /// Type of row vectors.
+    type R;//: GenFloatVec<S>;
+
+    /// Type of transpose matrix.
+    type Transpose: GenMat<S, Self::R, R = C, Transpose = Self>;
+
+    /// Returns the transpose matrix.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use glm::GenMat;    // bing the method into scope.
+    ///
+    /// let m = glm::mat3x2(1., 2., 3., 4., 5., 6.);
+    /// let tm = glm::mat2x3(1., 3., 5., 2., 4., 6.);
+    /// assert_eq!(tm, m.transpose());
+    /// ```
+    fn transpose(&self) -> Self::Transpose;
+
+    /// Component-wise multiplication.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use glm::GenMat;    // bing the method into scope.
+    ///
+    /// let m1 = glm::mat2(1., 2., 3., 4.);
+    /// let m2 = glm::mat2(0., 0., -7., 0.5);
+    /// assert_eq!(m1.mul_c(&m2), glm::mat2(0., 0., -21., 2.));
+    /// ```
+    fn mul_c(&self, rhs: &Self) -> Self;
+}
