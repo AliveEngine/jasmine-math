@@ -411,16 +411,26 @@ impl_assignment_operator!(<S: BaseNum> DivAssign<S> for Bivector3<S> {
     fn div_assign(&mut self, scalar) { self.x/= scalar; self.y /= scalar; self.z /= scalar;}
 });
 
-impl<S:BaseNum> BitXor<Vector3<S>> for Vector3<S> {
-    type Output = Bivector3<S>;
-    fn bitxor(self, b: Vector3<S>) -> Bivector3<S> { 
+impl_operator!(<S: BaseNum> BitXor<Vector3<S>> for Vector3<S> {
+    fn bitxor(vec3, b) -> Bivector3<S> { 
         Bivector3{
-            x: self.y * b.z - self.z * b.y, 
-            y: self.z * b.x - self.x * b.z, 
-            z: self.x * b.y - self.y * b.x
+            x: vec3.y * b.z - vec3.z * b.y, 
+            y: vec3.z * b.x - vec3.x * b.z, 
+            z: vec3.x * b.y - vec3.y * b.x
         }
     }
-}
+});
+
+// impl<S:BaseNum> BitXor<Vector3<S>> for Vector3<S> {
+//     type Output = Bivector3<S>;
+//     fn bitxor(self, b: Vector3<S>) -> Bivector3<S> { 
+//         Bivector3{
+//             x: self.y * b.z - self.z * b.y, 
+//             y: self.z * b.x - self.x * b.z, 
+//             z: self.x * b.y - self.y * b.x
+//         }
+//     }
+// }
 // impl_operator!(<S: BaseNum> BitXor<Vector3<S> > for Vector3<S> {
 //     fn bitxor(a, b) -> Bivector3<S> { 
 //         Bivector3{

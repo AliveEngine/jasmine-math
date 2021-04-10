@@ -588,6 +588,10 @@ where
     /// Test if this matrix is symmetric. That is, it is equal to its
     /// transpose.
     fn is_symmetric(&self) -> bool;
+
+    // fn inverse(&self) -> Self;
+
+    // fn adjugate(&self) -> Self;
 }
 
 /// Angles and their associated trigonometric functions.

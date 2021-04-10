@@ -87,9 +87,8 @@ pub use point::{point1, point2, point3, Point1, Point2, Point3};
 pub use bivector3::{bivec3, Bivector3};
 pub use bivector4::{bivec4, Bivector4};
 pub use trivector4::{trivec4, Trivector4};
+pub use matrix::{Matrix2, Matrix3, Matrix4};
 
-
-//pub use bivector3;
 
 // pub mod core;
 // pub mod math;

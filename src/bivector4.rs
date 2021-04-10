@@ -34,6 +34,7 @@ pub struct Bivector4<S> {
     pub moment: Bivector3<S>,
 }
 
+
 impl<S> Bivector4<S> 
 {
             
@@ -82,6 +83,169 @@ impl<S> Bivector4<S>
 pub const fn bivec4<S>(dir: Vector3<S>, m:Bivector3<S>) -> Bivector4<S> {
     Bivector4{direction: dir, moment: m}
 }
+
+impl<S: NumCast + Copy> Bivector4<S> {
+    /// Component-wise casting to another type.
+    #[inline]
+    pub fn cast<T: NumCast>(&self) -> Option<Bivector4<T>> {
+        let dir = match self.direction.cast() {
+            Some(dir) => dir,
+            None => return None
+        };
+        let mom = match self.moment.cast() {
+            Some(mom) => mom,
+            None => return None
+        };
+        Some(Bivector4 { direction: dir, moment: mom})
+    }
+}
+
+impl<S: BaseFloat> approx::AbsDiffEq for Bivector4<S> {
+    type Epsilon = S::Epsilon;
+
+    #[inline]
+    fn default_epsilon() -> S::Epsilon {
+        S::default_epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: S::Epsilon) -> bool {
+        self.direction.abs_diff_eq(&other.direction, epsilon) &&
+        self.moment.abs_diff_eq(&other.moment, epsilon)
+    }
+}
+
+impl<S: BaseFloat> approx::RelativeEq for Bivector4<S> {
+    #[inline]
+    fn default_max_relative() -> S::Epsilon {
+        S::default_max_relative()
+    }
+
+    #[inline]
+    fn relative_eq(&self, other: &Self, epsilon: S::Epsilon, max_relative: S::Epsilon) -> bool {
+        self.direction.relative_eq(&other.direction, epsilon, max_relative) &&
+        self.moment.relative_eq(&other.moment, epsilon, max_relative)
+    }
+}
+
+impl<S: BaseFloat> approx::UlpsEq for Bivector4<S> {
+    #[inline]
+    fn default_max_ulps() -> u32 {
+        S::default_max_ulps()
+    }
+
+    #[inline]
+    fn ulps_eq(&self, other: &Self, epsilon: S::Epsilon, max_ulps: u32) -> bool {
+        self.direction.ulps_eq(&other.direction, epsilon, max_ulps) &&
+        self.moment.ulps_eq(&other.moment, epsilon, max_ulps)
+    }
+}
+
+#[cfg(feature = "rand")]
+impl<S> Distribution<Bivector4<S>> for Standard
+    where Standard: Distribution<S>,
+        S: BaseFloat {
+    #[inline]
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Bivector4<S> {
+        Bivector4{
+            direction: self.sample(rng),
+            moment: self.sample(rng)
+        }
+    }
+}
+
+
+
+impl<S: BaseNum> ElementWise for Bivector4<S> {
+    #[inline] default_fn!( add_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
+        Bivector4::new_dir_m(
+            self.direction + rhs.direction,
+            self.moment + rhs.moment
+        )
+    } );
+    #[inline] default_fn!( sub_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
+        Bivector4::new_dir_m(
+            self.direction - rhs.direction,
+            self.moment - rhs.moment
+        )
+    } );
+    #[inline] default_fn!( mul_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
+        Bivector4::new_dir_m(
+            self.direction * rhs.direction,
+            self.moment * rhs.moment
+        )
+    } );
+    #[inline] default_fn!( div_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
+        Bivector4::new_dir_m(
+            self.direction / rhs.direction,
+            self.moment / rhs.moment
+        )
+    } );
+    #[inline] fn rem_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
+        Bivector4::new_dir_m(
+            self.direction % rhs.direction,
+            self.moment % rhs.moment
+        )
+    }
+
+    #[inline] default_fn!( add_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
+        self.direction += rhs.direction;
+        self.moment += rhs.moment;
+    }  );
+    #[inline] default_fn!( sub_assign_element_wise(&mut self, rhs: Bivector4<S>) {
+         self.direction -= rhs.direction;
+         self.moment -= rhs.direction;
+    } );
+    #[inline] default_fn!( mul_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
+        self.direction *= rhs.direction;
+        self.moment *= rhs.direction;
+    } );
+    #[inline] default_fn!( div_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
+        self.direction /= rhs.direction;
+        self.moment /= rhs.direction;
+    } );
+    #[inline] fn rem_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
+        self.direction %= rhs.direction;
+        self.moment %= rhs.direction;
+    }
+}
+
+macro_rules! impl_scalar_ops {
+    (<$S:ident>) => {
+        impl_operator!(Mul<Bivector4<$S>> for $S {
+            fn mul(scalar, biv4) -> Bivector4<$S> { Bivector4::new_dir_m(
+                biv4.direction * scalar,
+                biv4.moment * scalar
+            ) }
+        });
+        impl_operator!(Div<Bivector4<$S>> for $S {
+            fn div(scalar, biv4) -> Bivector4<$S> { Bivector4::new_dir_m(
+                scalar / biv4.direction,
+                scalar / biv4.moment
+            ) }
+        });
+        impl_operator!(Rem<Bivector4<$S>> for $S {
+            fn rem(scalar, biv4) -> Bivector4<$S> { Bivector4::new_dir_m(
+                scalar % biv4.direction,
+                scalar % biv4.moment
+            ) }
+        });
+    };
+}
+
+impl_scalar_ops!(<usize>);
+impl_scalar_ops!(<u8> );
+impl_scalar_ops!(<u16>);
+impl_scalar_ops!(<u32> );
+impl_scalar_ops!(<u64> );
+impl_scalar_ops!(<isize> );
+impl_scalar_ops!(<i8> );
+impl_scalar_ops!(<i16> );
+impl_scalar_ops!(<i32> );
+impl_scalar_ops!(<i64> );
+impl_scalar_ops!(<f32> );
+impl_scalar_ops!(<f64> );
+
 
 impl<S: BaseNum> Bivector4<S> {
     pub fn new_point3_point3(p: Point3<S>, q: Point3<S>) -> Bivector4<S> {
@@ -137,18 +301,58 @@ impl<'a, S:BaseFloat> Bivector4<S> {
     }
 }
 
-impl<S: BaseNum> MulAssign<S> for Bivector4<S> {
-    fn mul_assign(&mut self, scalar: S) {
+impl_assignment_operator!(<S:BaseNum> MulAssign<S> for Bivector4<S> {
+    fn mul_assign(&mut self, scalar) {
         self.direction *= scalar;
         self.moment *= scalar;
     }
-}
+});
 
-impl<S: BaseNum> DivAssign<S> for Bivector4<S> {
-    fn div_assign(&mut self, scalar: S) {
+impl_assignment_operator!(<S:BaseNum> DivAssign<S> for Bivector4<S> {
+    fn div_assign(&mut self, scalar) {
         let s = S::one() / scalar;
         self.direction *= s;
         self.moment *= s;
-
     }
+});
+
+impl<S: Neg<Output = S>> Neg for Bivector4<S> {
+    type Output = Bivector4<S>;
+
+    #[inline]
+    default_fn!( neg(self) -> Bivector4<S> { 
+        Bivector4::new(
+            -self.direction.x, -self.direction.y, -self.direction.z, 
+            -self.moment.x, -self.moment.y, -self.moment.z)
+    });
 }
+
+impl_operator!(<S: BaseNum> Mul<S> for Bivector4<S> {
+    fn mul(lhs, scalar) -> Bivector4<S> {
+        Bivector4::new(
+            lhs.direction.x * scalar, lhs.direction.y * scalar, lhs.direction.z * scalar, 
+            lhs.moment.x * scalar, lhs.moment.y * scalar, lhs.moment.z * scalar)
+    }
+});
+
+impl_operator!(<S: BaseNum> Div<S> for Bivector4<S> {
+    fn div(lhs, scalar) -> Bivector4<S> {
+        Bivector4::new(
+            lhs.direction.x / scalar, lhs.direction.y / scalar, lhs.direction.z / scalar, 
+            lhs.moment.x / scalar, lhs.moment.y / scalar, lhs.moment.z / scalar)
+    }
+});
+
+
+impl_operator!(<S:BaseNum> BitXor<Point3<S>> for Point3<S>{
+    fn bitxor(p, q) -> Bivector4<S> {
+        Bivector4::new(
+            q.x - p.x, q.y - p.y, q.z - p.z, 
+            p.y * q.z - p.z * q.y, 
+            p.z * q.x - p.x * q.z,
+             p.x * q.y - p.y * q.x
+        )
+    }
+});
+
+
