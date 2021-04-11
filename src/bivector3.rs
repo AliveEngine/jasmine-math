@@ -25,7 +25,7 @@ use mint;
 /// x,y,z is the value of $e_23,e_31,e_12$ coordinate.
 /// This type is marked as `#[repr(C)]`.
 #[repr(C)]
-#[derive(PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Bivector3<S> {
     pub x: S,
@@ -297,12 +297,12 @@ impl<S: BaseNum> Bivector3<S>
     }
 
     #[inline]
-    fn dot(self, other: Bivector3<S>) -> S {
+    pub fn dot(self, other: Bivector3<S>) -> S {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     #[inline]
-    fn magnitude(self) -> S
+    pub fn magnitude(self) -> S
     where
         S: Float,
     {
@@ -310,12 +310,12 @@ impl<S: BaseNum> Bivector3<S>
     }
 
     #[inline]
-    fn magnitude2(self) -> S {
+    pub fn magnitude2(self) -> S {
         Self::dot(self, self)
     }
 
     #[inline]
-    fn inverse_mag(self) -> S 
+    pub fn inverse_mag(self) -> S 
     where
         S: Neg<Output = S> + BaseFloat + Zero +  One 
     {
@@ -323,7 +323,7 @@ impl<S: BaseNum> Bivector3<S>
     }
 
     #[inline]
-    fn normalize(self) -> Bivector3<S> 
+    pub fn normalize(self) -> Bivector3<S> 
     where
         S: Neg<Output = S> + BaseFloat + Zero +  One 
     {
@@ -331,6 +331,17 @@ impl<S: BaseNum> Bivector3<S>
     }
 
 }
+
+
+impl_operator!(<S: BaseFloat> Rem<S> for Bivector3<S> {
+    fn rem(lhs, rhs) -> Bivector3<S> {
+        Bivector3::new(lhs.x % rhs, lhs.y % rhs, lhs.z % rhs)
+    }
+});
+
+impl_assignment_operator!(<S: BaseFloat> RemAssign<S> for Bivector3<S> {
+    fn rem_assign(&mut self, scalar) { self.x %= scalar; self.y %= scalar; self.z %= scalar; }
+});
 
 impl<S: BaseNum> Zero for Bivector3<S> {
     #[inline]
@@ -400,6 +411,15 @@ impl<S: Neg<Output = S>> Neg for Bivector3<S> {
 
 impl_operator!(<S: BaseNum> Mul<S> for Bivector3<S> {
     fn mul(vector, scalar) -> Bivector3<S> { Bivector3{x:vector.x * scalar, y: vector.y * scalar, z:vector.z * scalar}}
+});    
+
+impl_operator!(<S: BaseNum> Mul<Bivector3<S>> for Bivector3<S> {
+    fn mul(a, b) -> Bivector3<S> { 
+        Bivector3 {
+        x: a.x * b.x,
+        y: a.y * b.y,
+        z: a.z * b.z
+    }}
 });    
 
 impl_assignment_operator!(<S: BaseNum> MulAssign<S> for Bivector3<S> {

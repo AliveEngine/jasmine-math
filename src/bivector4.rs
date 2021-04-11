@@ -17,12 +17,10 @@ use num::{BaseFloat, BaseNum};
 use point::{Point2, Point3};
 use vector::{Vector2, Vector3, Vector4};
 use bivector3::{Bivector3, bivec3};
+use trivector4::{Trivector4};
 
 #[cfg(feature = "mint")]
 use mint;
-
-use crate::Trivector4;
-
 
 /// Bivector4D in four dimensional bivector having size float components.
 /// 

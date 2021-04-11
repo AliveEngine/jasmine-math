@@ -88,7 +88,7 @@ pub use bivector3::{bivec3, Bivector3};
 pub use bivector4::{bivec4, Bivector4};
 pub use trivector4::{trivec4, Trivector4};
 pub use matrix::{Matrix2, Matrix3, Matrix4};
-
+pub use quaternion::{Quaternion};
 
 // pub mod core;
 // pub mod math;
@@ -119,6 +119,7 @@ mod bivector3;
 mod bivector4;
 mod trivector4;
 mod matrix;
+mod quaternion;
 
 mod algebra;
 
