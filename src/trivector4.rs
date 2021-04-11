@@ -285,7 +285,7 @@ impl<S: BaseNum> Trivector4<S> {
 
 impl<S:BaseNum> Trivector4<S> {
 
-    pub fn new_bivec3_point3(bivec3: Bivector3<S>, p: Point3<S>) -> Trivector4<S> 
+    pub fn new_bivec3_point3(bivec3: &Bivector3<S>, p: &Point3<S>) -> Trivector4<S> 
     where 
         S:Neg<Output = S>
     {
@@ -304,7 +304,7 @@ impl<S:BaseNum> Trivector4<S> {
 }
 
 impl<S:BaseNum> ProjectTrait<Trivector4<S>> for Point3<S> {
-    fn project(self, f: Trivector4<S>) -> Self {
+    fn project(&self, f: &Trivector4<S>) -> Self {
         self - (!f.xyz()) * (self ^ f)
     }
 }
@@ -313,9 +313,9 @@ impl<S: BaseNum> AntiprojectTrait<Point3<S>> for Trivector4<S>
 where 
     S:Neg<Output = S>
 {
-    fn anti_project(self, p: Point3<S>) -> Trivector4<S>  
+    fn anti_project(&self, p: &Point3<S>) -> Trivector4<S>  
     {
-        Trivector4::new_bivec3_point3(self.xyz(), p)
+        Trivector4::new_bivec3_point3(&self.xyz(), &p)
     }
 }
 

@@ -834,11 +834,11 @@ where
 
 
 pub trait ProjectTrait<U>{
-    fn project(self, other: U) -> Self;
+    fn project(&self, other: &U) -> Self;
 }
 
 pub trait AntiprojectTrait<U>{
-    fn anti_project(self, other: U) -> Self;
+    fn anti_project(&self, other: &U) -> Self;
 }
 
 pub trait ComplementTrait<O>

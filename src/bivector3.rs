@@ -352,6 +352,7 @@ impl<S:BaseNum> Not for Bivector3<S> {
     }
 }
 
+
 impl<S:BaseNum> Not for Vector3<S> {
     type Output = Bivector3<S>;
 
@@ -359,6 +360,7 @@ impl<S:BaseNum> Not for Vector3<S> {
         Bivector3{x: self.x, y : self.y, z: self.z} 
     }
 }
+
 
 impl<S:BaseNum> ComplementTrait<Vector3<S>> for Bivector3<S> {
     fn complement(self) -> Vector3<S> {
@@ -503,3 +505,13 @@ impl<S: Mul<Output = S> + Sub<Output = S> + Copy> Cross<Self, Bivector3<S>> for 
         Bivector3::new(self.y * q.z - self.z * q.y, self.z * q.x - self.x * q.z, self.x * q.y - self.y * q.x)
     }
 }
+
+
+impl<S:BaseNum> ProjectTrait<Bivector3<S>> for Vector3<S> {
+    fn project(&self, b: &Bivector3<S>) -> Vector3<S> {
+        let v = !(*b);
+
+        (v ^ self) ^ b
+    }
+}
+

@@ -15,7 +15,7 @@ use angle::Rad;
 use approx;
 use num::{BaseFloat, BaseNum};
 use point::{Point2, Point3};
-use vector::{Vector2, Vector3};
+use vector::{Vector2, Vector3, Vector4};
 use bivector3::{Bivector3, bivec3};
 
 #[cfg(feature = "mint")]
@@ -155,61 +155,6 @@ impl<S> Distribution<Bivector4<S>> for Standard
 }
 
 
-
-impl<S: BaseNum> ElementWise for Bivector4<S> {
-    #[inline] default_fn!( add_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
-        Bivector4::new_dir_m(
-            self.direction + rhs.direction,
-            self.moment + rhs.moment
-        )
-    } );
-    #[inline] default_fn!( sub_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
-        Bivector4::new_dir_m(
-            self.direction - rhs.direction,
-            self.moment - rhs.moment
-        )
-    } );
-    #[inline] default_fn!( mul_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
-        Bivector4::new_dir_m(
-            self.direction * rhs.direction,
-            self.moment * rhs.moment
-        )
-    } );
-    #[inline] default_fn!( div_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
-        Bivector4::new_dir_m(
-            self.direction / rhs.direction,
-            self.moment / rhs.moment
-        )
-    } );
-    #[inline] fn rem_element_wise(self, rhs: Bivector4<S>) -> Bivector4<S> { 
-        Bivector4::new_dir_m(
-            self.direction % rhs.direction,
-            self.moment % rhs.moment
-        )
-    }
-
-    #[inline] default_fn!( add_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
-        self.direction += rhs.direction;
-        self.moment += rhs.moment;
-    }  );
-    #[inline] default_fn!( sub_assign_element_wise(&mut self, rhs: Bivector4<S>) {
-         self.direction -= rhs.direction;
-         self.moment -= rhs.direction;
-    } );
-    #[inline] default_fn!( mul_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
-        self.direction *= rhs.direction;
-        self.moment *= rhs.direction;
-    } );
-    #[inline] default_fn!( div_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
-        self.direction /= rhs.direction;
-        self.moment /= rhs.direction;
-    } );
-    #[inline] fn rem_assign_element_wise(&mut self, rhs: Bivector4<S>) { 
-        self.direction %= rhs.direction;
-        self.moment %= rhs.direction;
-    }
-}
-
 macro_rules! impl_scalar_ops {
     (<$S:ident>) => {
         impl_operator!(Mul<Bivector4<$S>> for $S {
@@ -254,7 +199,7 @@ impl<S: BaseNum> Bivector4<S> {
         Bivector4::new_dir_m(dir, m)
     }
 
-    pub fn new_point3_vec3(p:Point3<S>, v:Vector3<S>) -> Bivector4<S> {
+    pub fn new_point3_vec3(p: Point3<S>, v:Vector3<S>) -> Bivector4<S> {
         let m: Bivector3<S> = Bivector3::new(p.y * v.z - p.z * v.y, p.z * v.x - p.x * v.z, p.x * v.y - p.y * v.x);
         Bivector4::new_dir_m(v, m)
     }
@@ -291,6 +236,12 @@ impl<S: BaseNum> Bivector4<S> {
     pub fn get_support(self) -> Vector3<S> {
         !self.direction ^ self.moment
     }
+
+    pub fn translate(&self, t: &Vector3<S>) -> Bivector4<S> {
+        Bivector4::new_dir_m(
+            self.direction, self.moment + (t ^ self.direction)
+        )
+    }
 }
 
 impl<'a, S:BaseFloat> Bivector4<S> {
@@ -299,6 +250,7 @@ impl<'a, S:BaseFloat> Bivector4<S> {
         *self *= self.direction.inverse_mag();
         self
     }
+
 }
 
 impl_assignment_operator!(<S:BaseNum> MulAssign<S> for Bivector4<S> {
@@ -354,5 +306,142 @@ impl_operator!(<S:BaseNum> BitXor<Point3<S>> for Point3<S>{
         )
     }
 });
+
+impl_operator!(<S:BaseNum> BitXor<Vector3<S>> for Point3<S> {
+    fn bitxor(p, v) -> Bivector4<S> {
+        Bivector4::new(
+            v.x, v.y, v.z, p.y * v.z - p.z * v.y, p.z * v.x - p.x * v.z, p.x * v.y - p.y * v.x
+        )
+    }
+});
+
+impl_operator!(<S:BaseNum> BitXor<Trivector4<S>> for Trivector4<S> {
+    fn bitxor(f, g) -> Bivector4<S> {
+        Bivector4::new(
+            f.z * g.y - f.y * g.z, f.x * g.z - f.z * g.x, f.y * g.x - f.x * g.y, f.x * g.w - f.w * g.x, f.y * g.w - f.w * g.y, f.z * g.w - f.w * g.z
+        )
+    }
+});
+
+impl_operator!(<S:BaseFloat> BitXor<Point3<S>> for Bivector4<S> {
+    fn bitxor(biv4, p) -> Trivector4<S>
+    {
+        Trivector4::new(
+            biv4.direction.y * p.z - biv4.direction.z * p.y + biv4.moment.x,
+            biv4.direction.z * p.x - biv4.direction.x * p.z + biv4.moment.y,
+            biv4.direction.x * p.y - biv4.direction.y * p.x + biv4.moment.z,
+            -biv4.moment.x * p.x - biv4.moment.y * p.y - biv4.moment.z * p.z
+        )
+    }
+});
+
+impl_operator!(<S:BaseFloat> BitXor<Bivector4<S>> for Point3<S> {
+    fn bitxor(p, biv4) -> Trivector4<S> {
+        biv4 ^ p
+    }
+});
+
+impl_operator!(<S:BaseFloat> BitXor<Vector3<S>> for Bivector4<S> {
+    fn bitxor(lhs, v) -> Trivector4<S> {
+        Trivector4::new(
+            lhs.direction.y * v.z - lhs.direction.z * v.y,
+            lhs.direction.z * v.x - lhs.direction.x * v.z,
+            lhs.direction.x * v.y - lhs.direction.y * v.x,
+           -lhs.moment.x * v.x - lhs.moment.y * v.y - lhs.moment.z * v.z
+        )
+    }
+});
+
+impl_operator!(<S:BaseFloat> BitXor<Bivector4<S>> for Vector3<S> {
+    fn bitxor(v, trv4) -> Trivector4<S> {
+        trv4 ^ v
+    }
+});
+
+impl_operator!(<S: BaseFloat> BitXor<Trivector4<S>> for Bivector4<S> {
+    fn bitxor(biv4, f) -> Vector4<S> {
+        Vector4::new(
+            biv4.moment.y * f.z - biv4.moment.z * f.y + biv4.direction.x * f.w,
+            biv4.moment.z * f.x - biv4.moment.x * f.z + biv4.direction.y * f.w,
+            biv4.moment.x * f.y - biv4.moment.y * f.x + biv4.direction.z * f.w,
+            -biv4.direction.x * f.x - biv4.direction.y * f.y - biv4.direction.z * f.z
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> BitXor<Bivector4<S>> for Trivector4<S> {
+    fn bitxor(f, biv4) -> Vector4<S> {
+        biv4 ^ f
+    }
+});
+
+impl_operator!(<S: BaseFloat> BitXor<Bivector4<S>> for Bivector4<S> {
+    fn bitxor(lhs_k, rhs_l) -> S {
+        -(lhs_k.direction ^ rhs_l.moment) - (lhs_k.moment ^ rhs_l.direction)
+    }
+});
+
+
+impl_grassmann_wedge! (<S:BaseNum>, Point3<S>, Point3<S>, Bivector4<S>);
+impl_grassmann_wedge! (<S:BaseNum>, Point3<S>, Vector3<S>, Bivector4<S>);
+impl_grassmann_antiwedge! (<S:BaseNum>, Trivector4<S>, Trivector4<S>, Bivector4<S>);
+
+impl_grassmann_wedge! (<S:BaseFloat>, Bivector4<S>, Point3<S>, Trivector4<S>);
+impl_grassmann_wedge! (<S:BaseFloat>, Point3<S>, Bivector4<S>, Trivector4<S>);
+impl_grassmann_wedge! (<S:BaseFloat>, Bivector4<S>, Vector3<S>, Trivector4<S>);
+impl_grassmann_wedge! (<S:BaseFloat>, Vector3<S>, Bivector4<S>, Trivector4<S>);
+
+impl_grassmann_antiwedge! (<S:BaseFloat>, Bivector4<S>, Trivector4<S>, Vector4<S>);
+impl_grassmann_antiwedge! (<S:BaseFloat>, Trivector4<S>, Bivector4<S>, Vector4<S>);
+impl_grassmann_antiwedge! (<S:BaseFloat>, Bivector4<S>, Bivector4<S>, S);
+
+impl<S:BaseNum> ProjectTrait<Bivector4<S>> for Point3<S> {
+    fn project(&self, biv4: &Bivector4<S>) -> Point3<S> {
+        let d = biv4.direction.dot(self.to_vec());
+        Point3::new(
+            d * biv4.direction.x + biv4.direction.y * biv4.moment.z - 
+            biv4.direction.z * biv4.moment.y,  d * biv4.direction.y + biv4.direction.z * biv4.moment.x - biv4.direction.x * biv4.moment.z, 
+            d * biv4.direction.z + biv4.direction.x * biv4.moment.y - biv4.direction.y * biv4.moment.x
+        )
+    }
+}
+
+impl<S:BaseNum> ProjectTrait<Trivector4<S>> for Bivector4<S> {
+    fn project(&self, f: &Trivector4<S>) -> Bivector4<S> {
+        let xyz = f.xyz();
+        let inv_xyz = !xyz;
+        Bivector4::new_dir_m(
+            self.direction - inv_xyz * (xyz ^ self.direction), 
+            xyz * (inv_xyz ^ self.moment) - (inv_xyz ^ self.direction) * f.w
+        )
+    }
+}
+
+impl<S:BaseNum> AntiprojectTrait<Point3<S>> for Bivector4<S>
+where 
+    S:Neg<Output = S>
+{
+    fn anti_project(&self, p: &Point3<S> ) -> Bivector4<S> {
+        let point = Point3::new(p.x, p.y, p.z);
+        Bivector4::new_point3_vec3(point, self.direction)
+    }
+}
+
+impl<S:BaseNum> AntiprojectTrait<Bivector4<S>> for Trivector4<S> {
+    fn anti_project(&self, biv4: &Bivector4<S> ) -> Trivector4<S> {
+        let xyz = self.xyz();
+        let not_direction = !biv4.direction;
+        let biv3 = xyz - not_direction * ( xyz ^ biv4.direction);
+        let scalar = biv4.moment ^ not_direction ^ xyz;
+        Trivector4::new_bivec3_s(
+            &biv3,
+            scalar
+        )
+    }
+}
+
+
+
+
 
 
