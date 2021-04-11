@@ -441,6 +441,7 @@ impl<S: BaseNum> Vector2<S> {
     }
 
     impl_swizzle_functions!(Vector1, Vector2, Vector3, Vector4, S, xy);
+
 }
 
 impl<S: BaseNum> Vector3<S> {

@@ -27,7 +27,7 @@ use approx;
 #[cfg(feature = "mint")]
 use mint;
 use num::BaseFloat;
-// use quaternion::Quaternion;
+use quaternion::Quaternion;
 
 /// A set of [Euler angles] representing a rotation in three-dimensional space.
 ///
@@ -103,47 +103,47 @@ impl<A> Euler<A> {
     }
 }
 
-// impl<S: BaseFloat> From<Quaternion<S>> for Euler<Rad<S>> {
-//     fn from(src: Quaternion<S>) -> Euler<Rad<S>> {
-//         let sig: S = cast(0.499).unwrap();
-//         let two: S = cast(2).unwrap();
-//         let one: S = cast(1).unwrap();
+impl<S: BaseFloat> From<Quaternion<S>> for Euler<Rad<S>> {
+    fn from(src: Quaternion<S>) -> Euler<Rad<S>> {
+        let sig: S = cast(0.499).unwrap();
+        let two: S = cast(2).unwrap();
+        let one: S = cast(1).unwrap();
 
-//         let (qw, qx, qy, qz) = (src.s, src.v.x, src.v.y, src.v.z);
-//         let (sqw, sqx, sqy, sqz) = (qw * qw, qx * qx, qy * qy, qz * qz);
+        let (qw, qx, qy, qz) = (src.s, src.v.x, src.v.y, src.v.z);
+        let (sqw, sqx, sqy, sqz) = (qw * qw, qx * qx, qy * qy, qz * qz);
 
-//         let unit = sqx + sqz + sqy + sqw;
-//         let test = qx * qz + qy * qw;
+        let unit = sqx + sqz + sqy + sqw;
+        let test = qx * qz + qy * qw;
 
-//         // We set x to zero and z to the value, but the other way would work too.
-//         if test > sig * unit {
-//             // x + z = 2 * atan(x / w)
-//             Euler {
-//                 x: Rad::zero(),
-//                 y: Rad::turn_div_4(),
-//                 z: Rad::atan2(qx, qw) * two,
-//             }
-//         } else if test < -sig * unit {
-//             // x - z = 2 * atan(x / w)
-//             Euler {
-//                 x: Rad::zero(),
-//                 y: -Rad::turn_div_4(),
-//                 z: -Rad::atan2(qx, qw) * two,
-//             }
-//         } else {
-//             // Using the quat-to-matrix equation from either
-//             // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/index.htm
-//             // or equation 15 on page 7 of
-//             // http://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19770024290.pdf
-//             // to fill in the equations on page A-2 of the NASA document gives the below.
-//             Euler {
-//                 x: Rad::atan2(two * (-qy * qz + qx * qw), one - two * (sqx + sqy)),
-//                 y: Rad::asin(two * (qx * qz + qy * qw)),
-//                 z: Rad::atan2(two * (-qx * qy + qz * qw), one - two * (sqy + sqz)),
-//             }
-//         }
-//     }
-// }
+        // We set x to zero and z to the value, but the other way would work too.
+        if test > sig * unit {
+            // x + z = 2 * atan(x / w)
+            Euler {
+                x: Rad::zero(),
+                y: Rad::turn_div_4(),
+                z: Rad::atan2(qx, qw) * two,
+            }
+        } else if test < -sig * unit {
+            // x - z = 2 * atan(x / w)
+            Euler {
+                x: Rad::zero(),
+                y: -Rad::turn_div_4(),
+                z: -Rad::atan2(qx, qw) * two,
+            }
+        } else {
+            // Using the quat-to-matrix equation from either
+            // http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/index.htm
+            // or equation 15 on page 7 of
+            // http://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19770024290.pdf
+            // to fill in the equations on page A-2 of the NASA document gives the below.
+            Euler {
+                x: Rad::atan2(two * (-qy * qz + qx * qw), one - two * (sqx + sqy)),
+                y: Rad::asin(two * (qx * qz + qy * qw)),
+                z: Rad::atan2(two * (-qx * qy + qz * qw), one - two * (sqy + sqz)),
+            }
+        }
+    }
+}
 
 impl<A: Angle> approx::AbsDiffEq for Euler<A> {
     type Epsilon = A::Epsilon;

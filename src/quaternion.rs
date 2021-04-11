@@ -11,7 +11,7 @@ use std::ops::*;
 
 use structure::*;
 
-use angle::Rad;
+use angle::{Rad, Deg};
 use approx;
 use euler::Euler;
 use num::{BaseFloat, BaseNum};
@@ -19,6 +19,7 @@ use point::{Point2, Point3};
 use vector::{Vector2, Vector3, Vector4};
 use bivector3::{Bivector3, bivec3};
 use trivector4::{Trivector4};
+use matrix::{Matrix3,Matrix4};
 
 #[cfg(feature = "mint")]
 use mint;
@@ -50,9 +51,55 @@ impl<S> Quaternion<S> {
     pub const fn from_sv(s: S, v: Bivector3<S>) -> Quaternion<S> {
         Quaternion { s: s, v: v }
     }
+
 }
 
 impl<S: BaseFloat> Quaternion<S> {
+
+    #[inline]
+    pub fn from_rotation_x(angle: Deg<S>) -> Quaternion<S> 
+    {
+        let half: S = cast(0.5f64).unwrap();
+        let (s_x, c_x) = Rad::sin_cos(Rad::from(angle) * half);
+
+        Quaternion::new(
+            s_x, S::zero(), S::zero(), c_x
+        )
+    }
+
+    #[inline]
+    pub fn from_rotation_y(angle: Deg<S>) -> Quaternion<S> 
+    {
+        let half: S = cast(0.5f64).unwrap();
+        let (s_x, c_x) = Rad::sin_cos(Rad::from(angle) * half);
+
+        Quaternion::new(
+            S::zero(), s_x, S::zero(), c_x
+        )
+    }
+
+    #[inline]
+    pub fn from_rotation_z(angle: Deg<S>) -> Quaternion<S> 
+    {
+        let half: S = cast(0.5f64).unwrap();
+        let (s_x, c_x) = Rad::sin_cos(Rad::from(angle) * half);
+
+        Quaternion::new(
+            S::zero(), S::zero(), s_x, c_x
+        )
+    }
+
+    #[inline]
+    pub fn from_rotation_axis(angle: Deg<S>, axis: &Bivector3<S>) -> Quaternion<S> 
+    {
+        let half: S = cast(0.5f64).unwrap();
+        let (s_x, c_x) = Rad::sin_cos(Rad::from(angle) * half);
+
+        Quaternion::from_sv(
+            c_x,
+            axis * s_x,
+        )
+    }
 
     /// The conjugate of the quaternion.
     #[inline]
@@ -125,19 +172,66 @@ impl<S: BaseFloat> Quaternion<S> {
     }
 
     #[inline]
-    fn magnitude2(self) -> S {
+    pub fn magnitude2(self) -> S {
         Self::dot(self, self)
     }
 
     #[inline]
-    fn squared_mag(self) -> S {
+    pub fn magnitude(self) -> S
+    {
+        Float::sqrt(self.magnitude2())
+    }
+
+    #[inline]
+    pub fn squared_mag(self) -> S {
         Self::dot(self, self)
     }
 
     #[inline]
-    fn inverse_mag(self) -> S {
+    pub fn inverse_mag(self) -> S {
         S::one() / Self::magnitude(self)
     }
+
+    #[inline]
+    pub fn normalize(self) -> Quaternion<S>
+    {
+        self.normalize_to(S::one())
+    }
+
+    #[inline]
+    fn normalize_to(self, magnitude: S) -> Quaternion<S>
+    {
+        self * (magnitude / self.magnitude())
+    }
+
+    pub fn get_direction_x(&self) -> Vector3<S> {
+        let two: S = cast(2.0f32).unwrap();
+        Vector3::new(
+            S::one() - two * (self.v.y * self.v.y + self.v.z * self.v.z),
+            two * (self.v.x * self.v.y + self.s * self.v.z),
+            two * (self.v.x * self.v.z - self.s * self.v.y)
+        )
+    }
+    
+    pub fn get_direction_y(&self) -> Vector3<S> {
+        let two: S = cast(2.0f32).unwrap();
+        Vector3::new(
+            two * (self.v.x * self.v.y - self.s * self.v.z),
+            S::one() - two * (self.v.x * self.v.x + self.v.z * self.v.z),
+            two * (self.v.y * self.v.z + self.s * self.v.x)
+        )
+    }
+
+    pub fn get_direction_z(&self) -> Vector3<S> {
+        let two: S = cast(2.0f32).unwrap();
+        Vector3::new(
+            two * (self.v.x * self.v.z + self.s * self.v.y),
+            S::one() - two * (self.v.y * self.v.z - self.s * self.v.x),
+            two * (self.v.x * self.v.x + self.v.y * self.v.y)
+        )
+    }
+
+
 }
 
 // impl_operator!(<S: BaseFloat> PartialEq<Quaternion<S> > for Quaternion<S> {
@@ -226,7 +320,6 @@ impl<S: BaseFloat> MetricSpace for Quaternion<S> {
 }
 
 impl<S: NumCast + Copy> Quaternion<S> {
-    /// Component-wise casting to another type.
     pub fn cast<T: BaseFloat>(&self) -> Option<Quaternion<T>> {
         let s = match NumCast::from(self.s) {
             Some(s) => s,
@@ -627,6 +720,66 @@ impl<S: BaseFloat> From<(S, S, S, S)> for Quaternion<S> {
         }
     }
 }
+
+macro_rules! impl_matrix_2_quaternion {
+    ($MatrixN:ident) => {
+        impl<S: BaseFloat> From<$MatrixN<S>> for Quaternion<S> {
+            fn from(m: $MatrixN<S>) -> Quaternion<S> {
+                let m00 = m.x.x;
+                let m11 = m.y.y;
+                let m22 = m.z.z;
+                let sum = m00 + m11 + m22;
+                let half: S = cast(0.5f32).unwrap();
+                let quater: S = cast(0.25f32).unwrap();
+                let m01 = m.y.x;
+                let m02 = m.z.x;
+                let m10 = m.x.y;
+                let m12 = m.z.y;
+                let m20 = m.x.z;
+                let m21 = m.y.z;
+                if sum > S::zero() {
+                    let w = Float::sqrt(sum + S::one()) * half;
+                    let f = quater / w;
+            
+                    let x = (m21 - m12) * f;
+                    let y = (m02 - m20) * f;
+                    let z = (m10 - m01) * f;
+                    Quaternion::new(x, y, z, w)
+                }
+                else if (m00 > m11) && (m00 > m22) {
+                    let x = Float::sqrt(m00 - m11 - m22 + S::one()) * half;
+                    let f = quater / x;
+            
+                    let y = (m10 + m01) * f;
+                    let z = (m02 +m20) * f;
+                    let w = (m21 - m12) * f;
+                    Quaternion::new(x, y, z, w)
+                }
+                else if m11 > m22 {
+                    let  y = Float::sqrt(m11 - m00 - m22 + S::one()) * half;
+                    let  f = quater / y;
+            
+                    let x = (m10 + m01) * f;
+                    let z = (m21 + m12) * f;
+                    let w = (m02 - m20) * f;
+                    Quaternion::new(x, y, z, w)
+                }
+                else {
+                    let z =  Float::sqrt(m22 - m00 - m11 + S::one()) * half;
+                    let  f = quater / z;
+            
+                    let x = (m02 + m20) * f;
+                    let y = (m21 + m12) * f;
+                    let w = (m10 - m01) * f;
+                    Quaternion::new(x, y, z, w)
+                }
+            }
+        }
+    }
+}
+
+impl_matrix_2_quaternion!(Matrix3);
+impl_matrix_2_quaternion!(Matrix4);
 
 impl<'a, S: BaseFloat> From<&'a (S, S, S, S)> for &'a Quaternion<S> {
     #[inline]

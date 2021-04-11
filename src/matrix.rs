@@ -35,6 +35,7 @@ use point::{Point2, Point3};
 use vector::{Vector2, Vector3, Vector4};
 use bivector3::{Bivector3};
 use bivector4::{Bivector4};
+use quaternion::{Quaternion};
 
 #[cfg(feature = "mint")]
 use mint;
@@ -1805,4 +1806,26 @@ unsafe fn det_sub_proc_unsafe<S: BaseFloat>(
     tmp -= d.mul_element_wise(h.mul_element_wise(c));
     tmp -= g.mul_element_wise(b.mul_element_wise(f));
     tmp
+}
+
+
+
+impl<S: BaseFloat> From<Quaternion<S> > for Matrix3<S> {
+    #[inline]
+    fn from(q: Quaternion<S>) -> Matrix3<S> {
+        let x2 = q.v.x * q.v.x;
+        let y2 = q.v.y * q.v.y;
+        let z2 = q.v.z * q.v.z;
+        let xy = q.v.x * q.v.y;
+        let xz = q.v.x * q.v.z;
+        let yz = q.v.y * q.v.z;
+        let wx = q.s * q.v.x;
+        let wy = q.s * q.v.y;
+        let wz = q.s * q.v.z;
+        let two: S = cast(2.0f32).unwrap();
+	    Matrix3::new(
+            S::one() - two * (y2 + z2), two * (xy - wz), two * (xz + wy),
+            two * (xy + wz), S::one()  - two * (x2 + z2), two * (yz - wx),
+            two * (xz - wy), two * (yz + wx), S::one() - two * (x2 + y2))
+    }
 }
