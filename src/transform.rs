@@ -99,8 +99,18 @@ impl<S: BaseFloat> Transform<S> {
         let (sx, cx) = Rad::sin_cos(r);
         Transform::new_3x3(
             S::one(), S::zero(), S::zero(),
-                S::zero(), cx, sx,
-                S::zero(), -sx, cx,
+            S::zero(), cx, sx,
+            S::zero(), -sx, cx,
+            )
+        }
+    }
+
+    pub fn from_rotation_y(r: Rad<S>) -> Transform<S> {
+        let (sx, cx) = Rad::sin_cos(r);
+        Transform::new_3x3(
+            S::one(), S::zero(), S::zero(),
+            S::zero(), cx, sx,
+            S::zero(), -sx, cx,
             )
         }
     }
