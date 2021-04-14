@@ -27,6 +27,7 @@ use approx;
 #[cfg(feature = "mint")]
 use mint;
 use num::BaseFloat;
+use transform::Transform;
 use quaternion::Quaternion;
 
 /// A set of [Euler angles] representing a rotation in three-dimensional space.
@@ -66,7 +67,7 @@ use quaternion::Quaternion;
 /// you can use the following code:
 ///
 /// ```
-/// use cgmath::{Deg, Euler, Quaternion};
+/// use jasmine::{Deg, Euler, Quaternion};
 ///
 /// let rotation = Quaternion::from(Euler {
 ///     x: Deg(90.0),
@@ -140,6 +141,41 @@ impl<S: BaseFloat> From<Quaternion<S>> for Euler<Rad<S>> {
                 x: Rad::atan2(two * (-qy * qz + qx * qw), one - two * (sqx + sqy)),
                 y: Rad::asin(two * (qx * qz + qy * qw)),
                 z: Rad::atan2(two * (-qx * qy + qz * qw), one - two * (sqy + sqz)),
+            }
+        }
+    }
+}
+
+
+impl<S: BaseFloat> From<Transform<S>> for Euler<Rad<S>> {
+    fn from(t: Transform<S>) -> Euler<Rad<S>> {
+        let sy = t.matrix.z.x;
+        
+        let sig: S = cast(0.499).unwrap();
+        let two: S = cast(2).unwrap();
+        let one: S = S::one();
+        let neg_one = -one;
+        let zero: S = S::zero();
+
+        if sy < one {
+            if sy > neg_one {
+                Euler {
+                    x: Rad::atan2(t.matrix.z.y ,t.matrix.z.z),
+                    y: Rad::asin(sy),
+                    z: Rad::atan2(t.matrix.y.x, t.matrix.x.x)
+                }
+            } else {
+                Euler {
+                    x: Rad::zero(),
+                    y: -Rad::turn_div_4(),
+                    z: Rad::atan2(t.matrix.x.y, t.matrix.y.y)
+                }
+            }
+        } else {
+            Euler {
+                x: Rad::zero(),
+                y: Rad::turn_div_4(),
+                z: Rad::atan2(t.matrix.x.y, t.matrix.y.y)
             }
         }
     }

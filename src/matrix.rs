@@ -356,9 +356,24 @@ impl<S> Matrix4<S> {
             w: c3,
         }
     }
+
+    #[inline]
+    pub fn from_bivs(a: &Bivector3<S>, n03: S, b: &Bivector3<S>, n13: S, c: &Bivector3<S>, n23: S, d: &Bivector3<S>, n33: S) -> Matrix4<S>
+    where
+        S: BaseFloat
+    {
+        Matrix4 {
+            x: Vector4::new(a.x, a.y, a.z, n03),
+            y: Vector4::new(b.x, b.y, b.z, n13),
+            z: Vector4::new(c.x, c.y, c.z, n23),
+            w: Vector4::new(d.x, d.y, d.z, n33),
+        }
+    }
 }
 
 impl<S: BaseFloat> Matrix4<S> {
+    
+
     /// Create a homogeneous transformation matrix from a translation vector.
     #[inline]
     pub fn from_translation(v: Vector3<S>) -> Matrix4<S> {

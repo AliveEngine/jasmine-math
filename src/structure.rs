@@ -660,6 +660,19 @@ where
 
     /// A full rotation.
     fn full_turn() -> Self;
+    
+    /// Two full rotation.
+    fn trun_mul_2() -> Self {
+        let factor: Self::Unitless = cast(2).unwrap();
+        Self::full_turn() * factor
+    }
+
+    // 3 * turn / 4
+    fn turn_mul_3_div_4() -> Self {
+        let factor3: Self::Unitless = cast(3).unwrap();
+        let factor4: Self::Unitless = cast(4).unwrap();
+        Self::full_turn() * factor3 / factor4
+    }
 
     /// Half of a full rotation.
     #[inline]
@@ -689,6 +702,10 @@ where
         Self::full_turn() / factor
     }
 
+
+
+
+    
     /// Compute the sine of the angle, returning a unitless ratio.
     ///
     /// ```rust
@@ -814,6 +831,8 @@ where
     /// let angle: Rad<f32> = Rad::atan(0.5);
     /// ```
     fn atan(ratio: Self::Unitless) -> Self;
+
+    //fn atan_yx(y: Self::Unitless, x: Self::Unitless) -> Self;
 
     fn atan2(a: Self::Unitless, b: Self::Unitless) -> Self;
 }
