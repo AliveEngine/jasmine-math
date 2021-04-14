@@ -89,7 +89,7 @@ pub use bivector4::{bivec4, Bivector4};
 pub use trivector4::{trivec4, Trivector4};
 pub use matrix::{Matrix2, Matrix3, Matrix4};
 pub use quaternion::{Quaternion};
-pub use transform::{Transform};
+pub use transform::{Transform4};
 // pub mod core;
 // pub mod math;
 // pub mod consts;

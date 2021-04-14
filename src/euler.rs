@@ -27,7 +27,7 @@ use approx;
 #[cfg(feature = "mint")]
 use mint;
 use num::BaseFloat;
-use transform::Transform;
+use transform::Transform4;
 use quaternion::Quaternion;
 
 /// A set of [Euler angles] representing a rotation in three-dimensional space.
@@ -147,8 +147,8 @@ impl<S: BaseFloat> From<Quaternion<S>> for Euler<Rad<S>> {
 }
 
 
-impl<S: BaseFloat> From<Transform<S>> for Euler<Rad<S>> {
-    fn from(t: Transform<S>) -> Euler<Rad<S>> {
+impl<S: BaseFloat> From<Transform4<S>> for Euler<Rad<S>> {
+    fn from(t: Transform4<S>) -> Euler<Rad<S>> {
         let sy = t.matrix.z.x;
         
         let sig: S = cast(0.499).unwrap();
