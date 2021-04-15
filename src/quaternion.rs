@@ -52,6 +52,14 @@ impl<S> Quaternion<S> {
         Quaternion { s: s, v: v }
     }
 
+    #[inline]
+    pub fn set(&mut self, w: S, xi: S, yj: S, zk: S){
+        self.s = w;
+        self.v.x = xi;
+        self.v.y = yj;
+        self.v.z= zk;
+    }
+
 }
 
 impl<S: BaseFloat> Quaternion<S> {
@@ -100,6 +108,8 @@ impl<S: BaseFloat> Quaternion<S> {
             axis * s_x,
         )
     }
+
+
 
     /// The conjugate of the quaternion.
     #[inline]
@@ -231,8 +241,37 @@ impl<S: BaseFloat> Quaternion<S> {
         )
     }
 
+    pub fn get_rotation_matrix(&self) -> Matrix3<S> {
+        let x2 = self.v.x * self.v.x;
+        let y2 = self.v.y * self.v.y;
+        let z2 = self.v.z * self.v.z;
+        let xy = self.v.x * self.v.y;
+        let xz = self.v.x * self.v.z;
+        let yz = self.v.y * self.v.z;
+        let wx = self.s * self.v.x;
+        let wy = self.s * self.v.y;
+        let wz = self.s * self.v.z;
+    
+        let two: S = cast(2.0f32).unwrap();
+        Matrix3::new(
+            S::one() - two * (y2 + z2), two * (xy + wz), two * (xz - wy),
+            two * (xy - wz), S::one() - two * (x2 + z2), two * (yz + wx),
+            two * (xz + wy), two * (yz - wx), S::one() - two * (x2 + y2)
+        )
+    }
 
+    pub fn set_rotation_matrix<'a, T>(&'a mut self, m: &T) -> &'a Quaternion<S>
+    where
+        T: Matrix<Scalar = S> + Index<usize, Output = <T as Matrix>::Column> + IndexMut<usize, Output = <T as Matrix>::Column>,
+    {
+        let m00 = m.row_col(0, 0);
+        let m11 = m.row_col(1,1);
+        let m22 = m.row_col(2,2,);
+        match sum
+
+    }
 }
+
 
 // impl_operator!(<S: BaseFloat> PartialEq<Quaternion<S> > for Quaternion<S> {
 //     fn eq(q1, q2) -> bool {

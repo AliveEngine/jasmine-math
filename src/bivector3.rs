@@ -534,4 +534,3 @@ impl<S:BaseNum> ProjectTrait<Bivector3<S>> for Vector3<S> {
         (v ^ self) ^ b
     }
 }
-

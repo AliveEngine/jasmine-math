@@ -41,9 +41,9 @@ pub struct Transform4<S> {
 }
 
 
-impl<S: BaseFloat> Transform4<S> {
+impl<S> Transform4<S> {
     #[inline]
-    pub fn new(
+    pub const fn new(
         c0r0: S, c0r1: S, c0r2: S, c0r3: S,
         c1r0: S, c1r1: S, c1r2: S, c1r3: S,
         c2r0: S, c2r1: S, c2r2: S, c2r3: S,
@@ -58,6 +58,11 @@ impl<S: BaseFloat> Transform4<S> {
             )
         }
     }
+}
+
+
+impl<S: BaseFloat> Transform4<S> {
+
 
     pub fn new_3x4(
         c0r0: S, c0r1: S, c0r2: S,
@@ -79,7 +84,7 @@ impl<S: BaseFloat> Transform4<S> {
         Transform4::new(a.x, a.y, a.z, S::zero(),b.x, b.y, b.z, S::zero(),c.x, c.y, c.z,  S::zero(), S::zero(),S::zero(),S::zero(), S::one())
     }
 
-    pub fn from_bivs(r0: &Bivector3<S>, c3r0: S, r1: &Bivector3<S>, c3r1: S, r2: Bivector3<S>, c3r2: S) -> Transform4<S> {
+    pub fn from_bivs(r0: &Bivector3<S>, c3r0: S, r1: &Bivector3<S>, c3r1: S, r2: &Bivector3<S>, c3r2: S) -> Transform4<S> {
         Transform4::new(
             r0.x, r1.x, r2.x, S::zero(), r0.y, r1.y, r2.y, S::zero(), r0.z, r1.z, r2.z, S::zero(), c3r0, c3r1, c3r2, S::one()
         )
@@ -124,6 +129,65 @@ impl<S: BaseFloat> Transform4<S> {
             s, c, S::zero(), 
             S::zero(), S::one(), S::one(),
             S::zero(), S::zero(), S::zero()
+        )
+    }
+
+
+
+    pub fn from_scale_x(sx: S) -> Transform4<S> {
+        Transform4::new_3x4(
+            sx, S::zero(), S::zero(),
+            S::zero(), S::one(), S::zero(),
+            S::zero(), S::zero(), S::one(),
+            S::zero(), S::zero(), S::zero()
+        )
+    }
+
+    pub fn from_scale_y(sy: S) -> Transform4<S> {
+        Transform4::new_3x4(
+            S::one(), S::zero(), S::zero(),
+            S::zero(), sy, S::zero(),
+            S::zero(), S::zero(), S::one(),
+            S::zero(), S::zero(), S::zero()
+        )
+    }
+
+    pub fn from_scale_z(sz: S) -> Transform4<S> {
+        Transform4::new_3x4(
+            S::one(), S::zero(), S::zero(),
+            S::zero(), S::one(), S::zero(),
+            S::zero(), S::zero(), sz,
+            S::zero(), S::zero(), S::zero()
+        )
+    }
+
+    pub fn from_scale(s: S) -> Transform4<S> {
+        Transform4::new_3x4(
+            s, S::zero(), S::zero(),
+            S::zero(), s, S::zero(),
+            S::zero(), S::zero(), s,
+            S::zero(), S::zero(), S::zero()
+        )
+    }
+
+    pub fn from_scale_xyz(sx: S, sy: S, sz: S) -> Transform4<S> {
+        Transform4::new_3x4(
+            sx, S::zero(), S::zero(),
+            S::zero(), sy, S::zero(),
+            S::zero(), S::zero(), sz,
+            S::zero(), S::zero(), S::zero()
+        )
+    }
+
+
+
+
+    pub fn from_translation(dv: &Vector3<S>) -> Transform4<S> {
+        Transform4::new_3x4(
+            S::one(), S::zero(), S::zero(),
+            S::zero(), S::one(), S::zero(),
+            S::zero(), S::zero(), S::one(),
+            dv.x, dv.y, dv.z
         )
     }
 
@@ -196,51 +260,6 @@ impl<S: BaseFloat> Transform4<S> {
         )
     }
 
-    pub fn from_scale_x(sx: S) -> Transform4<S> {
-        Transform4::new_3x4(
-            sx, S::zero(), S::zero(),
-            S::zero(), S::one(), S::zero(),
-            S::zero(), S::zero(), S::one(),
-            S::zero(), S::zero(), S::zero()
-        )
-    }
-
-    pub fn from_scale_y(sy: S) -> Transform4<S> {
-        Transform4::new_3x4(
-            S::one(), S::zero(), S::zero(),
-            S::zero(), sy, S::zero(),
-            S::zero(), S::zero(), S::one(),
-            S::zero(), S::zero(), S::zero()
-        )
-    }
-
-    pub fn from_scale_z(sz: S) -> Transform4<S> {
-        Transform4::new_3x4(
-            S::one(), S::zero(), S::zero(),
-            S::zero(), S::one(), S::zero(),
-            S::zero(), S::zero(), sz,
-            S::zero(), S::zero(), S::zero()
-        )
-    }
-
-    pub fn from_scale(s: S) -> Transform4<S> {
-        Transform4::new_3x4(
-            s, S::zero(), S::zero(),
-            S::zero(), s, S::zero(),
-            S::zero(), S::zero(), s,
-            S::zero(), S::zero(), S::zero()
-        )
-    }
-
-    pub fn from_scale_xyz(sx: S, sy: S, sz: S) -> Transform4<S> {
-        Transform4::new_3x4(
-            sx, S::zero(), S::zero(),
-            S::zero(), sy, S::zero(),
-            S::zero(), S::zero(), sz,
-            S::zero(), S::zero(), S::zero()
-        )
-    }
-
     pub fn from_scale_vec3(scale: S, a: &Vector3<S>) -> Transform4<S> {
         let s  = scale - S::one();
         let x = a.x * s;
@@ -270,21 +289,77 @@ impl<S: BaseFloat> Transform4<S> {
         )
     }
 
-    pub fn from_translation(dv: &Vector3<S>) -> Transform4<S> {
-        Transform4::new_3x4(
-            S::one(), S::zero(), S::zero(),
-            S::zero(), S::one(), S::zero(),
-            S::zero(), S::zero(), S::one(),
-            dv.x, dv.y, dv.z
-        )
-    }
-    
     pub fn orthogonalize(&mut self, column: i32) -> &Transform4<S> {
         self.matrix.x.normalize();
         self.matrix.y = (self.matrix.y - self.matrix.x * self.matrix.x.dot(self.matrix.y)).normalize();
         self.matrix.z = (self.matrix.z - self.matrix.x * self.matrix.x.dot(self.matrix.z)).normalize();
         self
     }
+
+    pub fn determinant(&self) -> S {
+        self[0][0] * (self[1][1] * self[2][2] - self[1][2] * self[2][1]) - self[0][1] * (self[1][0] * self[2][2] - self[1][2] * self[2][0]) + self[0][2] * (self[1][0] * self[2][1] - self[1][1] * self[2][0])
+    }
+
+    // todo simd
+    pub fn inverse(&self) -> Transform4<S> {
+        let r0 = self.matrix.row_v3(0);
+        let r1 = self.matrix.row_v3(1);
+        let r2 = self.matrix.row_v3(2);
+        let r3 = self.matrix.row_v3(3);
+
+        let mut s: Bivector3<S> = r0 ^ r1;
+        let mut t: Bivector3<S> = r2 ^ r3;
+        
+        let inv_det: S = S::one() / (s ^ r2);
+
+        s *= inv_det;
+        t *= inv_det;
+
+        let v: Vector3<S> = r2 * inv_det;
+
+        let bv1 = r1 ^ v;
+        let s1 = -(r1 ^ t);
+        let bv2 = v ^ r0;
+        let s2 = r0 ^ t;
+        let s3 = -(r3 ^ s);
+
+        Transform4::from_bivs(&bv1, s1, &bv2, s2, &s, s3)
+    }
+
+    // todo simd
+    pub fn adjugate(&self) -> Transform4<S> {
+        let r0 = self.matrix.row_v3(0);
+        let r1 = self.matrix.row_v3(1);
+        let r2 = self.matrix.row_v3(2);
+        let r3 = self.matrix.row_v3(3);
+
+        let s: Bivector3<S> = r0 ^ r1;
+        let t: Bivector3<S> = r2 ^ r3;
+
+        let bv1 = r1 ^ r2;
+        let s1 = -(r1 ^ t);
+        let bv2 = r2 ^ r0;
+        let s2 = r0 ^ t;
+        let s3 = -(r3 ^ s);
+
+        Transform4::from_bivs(&bv1, s1, &bv2, s2, &s, s3)
+    }
+
+    pub fn adjugate3d(&self) -> Matrix3<S> {
+        let r0 = self.matrix.row_v3(0);
+        let r1 = self.matrix.row_v3(1);
+        let r2 = self.matrix.row_v3(2);
+
+        let g0: Bivector3<S> = r1 ^ r2;
+        let g1: Bivector3<S> = r2 ^ r0;
+        let g2: Bivector3<S> = r0 ^ r1;
+
+        Matrix3::new(
+            g0.x, g0.y, g0.z, g1.x, g1.y, g1.z, g2.x, g2.y, g2.z
+        )
+    }
+
+
 }
 
 impl<S> Index<usize> for Transform4<S> {
@@ -364,33 +439,186 @@ impl_assignment_operator!(<S: BaseFloat> MulAssign<Matrix3<S>> for Transform4<S>
 });
 
 //#[cfg(not(feature = "simd"))]
-
+// todo simd
 impl_operator!(<S: BaseFloat> Mul<Transform4<S>> for Transform4<S> {
     fn mul(m1, m2) -> Transform4<S> {
         Transform4::new_3x4(
-            m1[0][0] * m2[0][0] + m1[1][0] * m2[0][1] + m1[2][0] * m[0][2],
-            m1[0][1] * m2[0][0] + m1[1][1] * m2[0][1] + m1[2][1] * m2[0][2],
-            m1[0][2] * m2[0][0] + m1[1][2] * m2[0][1] + m1[2][2] * m2[0][2],
+            m1[0][0] * m2[0][0] + m1[0][1] * m2[1][0] + m1[0][2] * m2[2][0],
+            m1[1][0] * m2[0][0] + m1[1][1] * m2[1][0] + m1[1][2] * m2[2][0],
+            m1[2][0] * m2[0][0] + m1[2][1] * m2[1][0] + m1[2][2] * m2[2][0],
+            
+            m1[0][0] * m2[0][1] + m1[0][1] * m2[1][1] + m1[0][2] * m2[2][1],
+            m1[1][0] * m2[0][1] + m1[1][1] * m2[1][1] + m1[1][2] * m2[2][1],
+            m1[2][0] * m2[0][1] + m1[2][1] * m2[1][1] + m1[2][2] * m2[2][1],
+            
+            
+            m1[0][0] * m2[0][2] + m1[0][1] * m2[1][2] + m1[0][2] * m2[2][2],
+            m1[1][0] * m2[0][2] + m1[1][1] * m2[1][2] + m1[1][2] * m2[2][2],
+            m1[2][0] * m2[0][2] + m1[2][1] * m2[1][2] + m1[2][2] * m2[2][2],
 
-            m1[0][0] * m2[1][0] + m1[1][0] * m2[1][1] + m1[2][0] * m2[1][2],
-            m1[0][1] * m2[1][0] + m1[1][1] * m2[1][1] + m1[2][1] * m2[1][2],
-            m1[0][2] * m2[2][0] + m1[1][2] * m2[2][1] + m1[2][2] * m2[2][2],
+            m1[0][0] * m2[0][3] + m1[0][1] * m2[1][3] + m1[0][2] * m2[2][3] + m1[0][3],
+            m1[1][0] * m2[0][3] + m1[1][1] * m2[1][3] + m1[1][2] * m2[2][3] + m1[1][3],
+            m1[2][0] * m2[0][3] + m1[2][1] * m2[1][3] + m1[2][2] * m2[2][3] + m1[2][3])
+    }
+});
 
-            m1[0][0] * m2[2][0] + m1[1][0] * m2[1][1] + m1[2][0] * m2[1][2],
-            m1[0][1] * m2[2][0] + m1[1][1] * m2[1][1] + m1[2][1] * m2[1][2],
-            m1[0][2] * m2[2][0] + m1[1][2] * m2[2][1] + m1[2][2] * m2[2][2],
+// todo simd
+impl_operator!(<S: BaseFloat> Mul<Transform4<S>> for Matrix4<S> {
+    fn mul(m1, m2) -> Matrix4<S> {
+        Matrix4::new(
+            m1[0][0] * m2[0][0] + m1[0][1] * m2[1][0] + m1[0][2] * m2[2][0],
+            m1[1][0] * m2[0][0] + m1[1][1] * m2[1][0] + m1[1][2] * m2[2][0],
+            m1[2][0] * m2[0][0] + m1[2][1] * m2[1][0] + m1[2][2] * m2[2][0],
+            m1[3][0] * m2[0][0] + m1[3][1] * m2[1][0] + m1[3][2] * m2[2][0],
+            
+            m1[0][0] * m2[0][1] + m1[0][1] * m2[1][1] + m1[0][2] * m2[2][1],
+            m1[1][0] * m2[0][1] + m1[1][1] * m2[1][1] + m1[1][2] * m2[2][1],
+            m1[2][0] * m2[0][1] + m1[2][1] * m2[1][1] + m1[2][2] * m2[2][1],
+            m1[3][0] * m2[0][1] + m1[3][1] * m2[1][1] + m1[3][2] * m2[2][1],
+            
+            m1[0][0] * m2[0][2] + m1[0][1] * m2[1][2] + m1[0][2] * m2[2][2],
+            m1[1][0] * m2[0][2] + m1[1][1] * m2[1][2] + m1[1][2] * m2[2][2],
+            m1[2][0] * m2[0][2] + m1[2][1] * m2[1][2] + m1[2][2] * m2[2][2],
+            m1[3][0] * m2[0][2] + m1[3][1] * m2[1][2] + m1[3][2] * m2[2][2],
 
-
-
-            m1[0][0] * m2[3][0] + m1[1][0] * m2[3][1] + m1[2][0] * m2[3][2] + m1[3][0],
-            m1[0][1] * m2[3][0] + m1[1][1] * m2[3][1] + m1[2][1] * m2[3][2] + m1[3][1],
-            m1[0][2] * m2[3][0] + m1[1][2] * m2[3][1] + m2[2][2] * m2[3][2] + m1[3][2]
+            m1[0][0] * m2[0][3] + m1[0][1] * m2[1][3] + m1[0][2] * m2[2][3] + m1[0][3],
+            m1[1][0] * m2[0][3] + m1[1][1] * m2[1][3] + m1[1][2] * m2[2][3] + m1[1][3],
+            m1[2][0] * m2[0][3] + m1[2][1] * m2[1][3] + m1[2][2] * m2[2][3] + m1[2][3],
+            m1[3][0] * m2[0][3] + m1[3][1] * m2[1][3] + m1[3][2] * m2[2][3] + m1[2][3]
         )
     }
 });
 
+// todo simd
+impl_operator!(<S: BaseFloat> Mul<Matrix4<S>> for Transform4<S> {
+    fn mul(m1, m2) -> Matrix4<S> {
+        Matrix4::new(
+            m1[0][0] * m2[0][0] + m1[0][1] * m2[1][0] + m1[0][2] * m2[2][0] + m1[0][3] * m2[3][0],
+            m1[0][0] * m2[0][1] + m1[0][1] * m2[1][1] + m1[0][2] * m2[2][1] + m1[0][3] * m2[3][1],
+            m1[0][0] * m2[0][2] + m1[0][1] * m2[1][2] + m1[0][2] * m2[2][2] + m1[0][3] * m2[3][2],
+            m1[0][0] * m2[0][3] + m1[0][1] * m2[1][3] + m1[0][2] * m2[2][3] + m1[0][3] * m2[3][3],
+            
+            m1[1][0] * m2[0][0] + m1[1][1] * m2[1][0] + m1[1][2] * m2[2][0] + m1[1][3] * m2[3][0],
+            m1[1][0] * m2[0][1] + m1[1][1] * m2[1][1] + m1[1][2] * m2[2][1] + m1[1][3] * m2[3][1],
+            m1[1][0] * m2[0][2] + m1[1][1] * m2[1][2] + m1[1][2] * m2[2][2] + m1[1][3] * m2[3][2],
+            m1[1][0] * m2[0][3] + m1[1][1] * m2[1][3] + m1[1][2] * m2[2][3] + m1[1][3] * m2[3][3],
+            
+            m1[2][0] * m2[0][0] + m1[2][1] * m2[1][0] + m1[2][2] * m2[2][0] + m1[2][3] * m2[3][0],
+            m1[2][0] * m2[0][1] + m1[2][1] * m2[1][1] + m1[2][2] * m2[2][1] + m1[2][3] * m2[3][1],
+            m1[2][0] * m2[0][2] + m1[2][1] * m2[1][2] + m1[2][2] * m2[2][2] + m1[2][3] * m2[3][2],
+            m1[2][0] * m2[0][3] + m1[2][1] * m2[1][3] + m1[2][2] * m2[2][3] + m1[2][3] * m2[3][3],
+            
+            m2[3][0], m2[3][1], m2[3][2], m2[3][3])
+    }
+});
 
+// todo simd
+impl_operator!(<S:BaseFloat> Mul<Vector3<S>> for Transform4<S>{
+    fn mul(m, v) -> Vector3<S> {
+        m * v
+    }
+});
 
+impl_operator!(<S: BaseFloat> Mul<Vector2<S>> for Transform4<S> {
+    fn mul(m, v) -> Vector2<S> {
+        Vector2::new(
+            m[0][0] * v.x + m[1][0] * v.y,
+            m[0][1] * v.x + m[1][1] * v.y
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> Mul<Point2<S>> for Transform4<S> {
+    fn mul(m, v) -> Point2<S> {
+        Point2::new(
+            m[0][0] * v.x + m[1][0] * v.y + m[3][0],
+            m[0][1] * v.x + m[1][1] * v.y + m[3][1]
+        )
+    }
+});
+ 
+pub fn Scale_v2<S>(m: &Transform4<S>, v: &Vector3<S>) -> Transform4<S>
+where 
+    S: BaseFloat
+{
+    Transform4::new_3x4(
+        m[0][0] * v.x, m[0][1] * v.y, m[0][2] * v.z,
+        m[1][0] * v.x, m[1][1] * v.y, m[1][2] * v.z,
+        m[2][0] * v.x, m[2][1] * v.y, m[2][2] * v.z,
+        m[3][0] * v.x, m[3][1] * v.y, m[3][2] * v.z
+    )
+}
+
+pub fn Transform_m3<S>(m1: &Transform4<S>, m2: &Matrix3<S>) -> Matrix3<S> 
+where 
+    S: BaseFloat
+{
+    Matrix3::new(
+        m1[0][0] * m2[0][0] + m1[1][0] * m2[0][1] + m1[2][0] * m2[0][2],
+        m1[0][1] * m2[0][0] + m1[1][1] * m2[0][1] + m1[2][1] * m2[0][2],
+        m1[0][2] * m2[0][0] + m1[1][2] * m2[0][1] + m1[2][2] * m2[0][2],
+
+        m1[0][0] * m2[1][0] + m1[1][0] * m2[1][1] + m1[2][0] * m2[1][2],
+        m1[0][1] * m2[1][0] + m1[1][1] * m2[1][1] + m1[2][1] * m2[1][2],
+        m1[0][2] * m2[1][0] + m1[1][2] * m2[1][1] + m1[2][2] * m2[1][2],
+
+        m1[0][0] * m2[2][0] + m1[1][0] * m2[2][1] + m1[2][0] * m2[2][2],
+        m1[0][1] * m2[2][0] + m1[1][1] * m2[2][1] + m1[2][1] * m2[2][2],
+        m1[0][2] * m2[2][0] + m1[1][2] * m2[2][1] + m1[2][2] * m2[2][2],
+    )
+}
+
+pub fn InverseTransformVec3<S>(m: &Transform4<S>, v: &Vector3<S>) -> Vector3<S>
+where 
+    S: BaseFloat
+{
+    let r0 = m.matrix.row_v3(0);
+    let r1 = m.matrix.row_v3(1);
+    let r2 = m.matrix.row_v3(2);
+
+    let s: Bivector3<S> = r0 ^ r1;
+
+    let inv_det: S = S::one() / (s ^ r2);
+
+    Vector3::new(
+        (r1 ^ r2 ^ v) * inv_det,
+        (r2 ^ r1 ^ v) * inv_det,
+        (s ^ v) * inv_det
+    )
+}
+
+pub fn AdjugateTransformVec3<S>(m: &Transform4<S>, v: &Vector3<S>) -> Vector3<S>
+where 
+    S: BaseFloat
+{
+    let r0 = m.matrix.row_v3(0);
+    let r1 = m.matrix.row_v3(1);
+    let r2 = m.matrix.row_v3(2);
+
+    Vector3::new(
+        r1 ^ r2 ^ v,
+        r2 ^ r0 ^ v,
+        r0 ^ r1 ^ v
+    )
+}
+
+pub fn AdjugateTransformPoint3<S>(m: &Transform4<S>, p: &Point3<S>) -> Point3<S>
+where 
+    S: BaseFloat
+{
+    let r0 = m.matrix.row_v3(0);
+    let r1 = m.matrix.row_v3(1);
+    let r2 = m.matrix.row_v3(2);
+    let r3 = m.matrix.row_v3(3);
+
+    let q = p - r3;
+
+    Point3::new(
+        r1 ^ r2 ^ q,
+        r2 ^ r0 ^ q,
+        r0 ^ r1 ^ q
+    )
+}
 
 impl<A> From<Euler<A>> for Transform4<A::Unitless>
 where

@@ -536,6 +536,11 @@ impl<S: BaseFloat> Matrix4<S> {
     pub fn is_finite(&self) -> bool {
         self.w.is_finite() && self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
     }
+
+    #[inline]
+    pub fn row_v3(&self, r: usize) -> Vector3<S> {
+        Vector3::new(self[0][r], self[1][r], self[2][r])
+    }
 }
 
 impl<S: BaseFloat> Zero for Matrix2<S> {

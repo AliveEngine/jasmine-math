@@ -488,7 +488,9 @@ where
 
     /// Get a row from this matrix by-value.
     fn row(&self, r: usize) -> Self::Row;
-
+    fn row_col(&self, r: usize, c: usize) -> Self::Scalar {
+        self[c][r]
+    }
     /// Swap two rows of this array.
     fn swap_rows(&mut self, a: usize, b: usize);
     /// Swap two columns of this array.
