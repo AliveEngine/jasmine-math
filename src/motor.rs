@@ -169,7 +169,13 @@ impl<S: BaseFloat> Motor<S> {
     }
 
     pub fn set_transform_matrix<'a>(&'a mut self, m: &Transform4<S>) -> &'a Motor<S> {
-        
+        self.rotor.set_rotation_matrix(m);
+        let r = &self.rotor.v;
+        let half: S = cast(0.5f32).unwrap();
+        let u = Vector3::new(m.row_col(0,3) * half, m.row_col(1,3) * half, m.row_col(2,3) * half);
+        let biv3 = !u * rotor.w - (!r ^ u);
+        let s = -(u  ^ r);
+        self.screw.set_biv3_s(&biv3, s);
         self
     }
 
@@ -219,4 +225,300 @@ impl_assignment_operator!(<S: BaseFloat> DivAssign<S> for Motor<S> {
         self.screw *= s;
     }
 });
+
+/// Returns the antireverse of the motor 
+impl_operator!(<S: BaseFloat> Not for Motor<S> {
+    fn not(q) -> Motor<S> {
+        Motor::new(
+            -q.rotor.v.x, -q.rotor.v.y, - q.rotor.v.z, -q.rotor.s,
+            -q.screw.v.x, -q.screw.v.y, -q.screw.v.z, q.screw.s
+        )
+    }
+});
+
+/// Returns the negation of the motor 
+impl_operator!(<S: BaseFloat> Neg for Motor<S> {
+    fn neg(q) -> Moto<S> {
+        Motor::new(
+            -q.rotor.v.x, -q.rotor.v.y, - q.rotor.v.z, -q.rotor.s,
+            -q.screw.v.x, -q.screw.v.y, -q.screw.v.z, -q.screw.s
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> Add<Motor<S>> for Motor<S> {
+    fn add(a, b) -> Motor<S> {
+        Motor::from_r_u(
+            a.rotor + b.rotor,
+            a.screw + b.screw
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> Sub<Motor<S>> for Motor<S> {
+    fn sub(a, b) -> Motor<S> {
+        Motor::from_r_u(
+            a.rotor - b.rotor,
+            a.screw - b.screw
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> Mul<S> for Motor<S> {
+    fn mul(q, s) -> Motor<S> {
+        Motor::new(
+            q.rotor.v.x * s, q.rotor.v.y * s, q.rotor.v.z * s, q.rotor.s * s,
+            q.screw.v.x * s, q.screw.v.y * s, q.screw.v.z * s, q.screw.s * s
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> Div<S> for Motor<S> {
+    fn div(q, s) -> Motor<S> {
+        Motor::new(
+            q.rotor.v.x / s, q.rotor.v.y / s, q.rotor.v.z / s, q.rotor.s / s,
+            q.screw.v.x / s, q.screw.v.y / s, q.screw.v.z / s, q.screw.s / s
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> Mul<Quaternion<S>> for Motor<S> {
+    fn mul(q, r) -> Motor<S> {
+        Motor::new(
+            q.rotor.s * r.v.x + q.rotor.v.x * r.s + q.rotor.v.y * r.v.z - q.rotor.v.z * r.v.y,
+            q.rotor.s * r.v.y - q.rotor.v.x * r.v.z + q.rotor.v.y * r.s + q.rotor.v.z * r.v.x,
+            q.rotor.s * r.v.z + q.rotor.v.x * r.v.y - q.rotor.v.y * r.v.x + q.rotor.v.z * r.s,
+            q.rotor.s * r.s - q.rotor.v.x * r.v.x - q.rotor.v.y * r.v.y - q.rotor.v.z * r.v.z,
+            q.screw.w * r.v.z + q.screw.x * r.v.y - q.screw.y * r.v.x + q.screw.z * r.s,
+            q.screw.w * r.v.x + q.screw.x * r.s + q.screw.y * r.v.z - q.screw.z * r.v.y,
+            q.screw.w * r.v.y - q.screw.x * r.v.z + q.screw.y * r.s + q.screw.z * r.v.x,
+            q.screw.w * r.s - q.screw.x * r.v.x - q.screw.y * r.v.y - q.screw.z * r.v.z
+        )
+    }
+});
+
+
+impl_operator!(<S: BaseFloat> Mul<Motor<S>> for Quaternion<S> {
+    fn mul(r, q) -> Motor<S> {
+        Motor::new(
+            r.s * q.rotor.v.x + r.v.x * q.rotor.s + r.v.y * q.rotor.v.z - r.v.z * q.rotor.v.y,
+            r.s * q.rotor.v.y - r.v.x * q.rotor.v.z + r.v.y * q.rotor.s + r.v.z * q.rotor.v.x,
+            r.s * q.rotor.v.z + r.v.x * q.rotor.v.y - r.v.y * q.rotor.v.x + r.v.z * q.rotor.s,
+            r.s * q.rotor.s - r.v.x * q.rotor.v.x - r.v.y * q.rotor.v.y - r.v.z * q.rotor.v.z,
+            r.s * q.screw.z + r.v.x * q.screw.y - r.v.y * q.screw.x + r.v.z * q.screw.w,
+            r.s * q.screw.x + r.v.x * q.screw.w + r.v.y * q.screw.z - r.v.z * q.screw.y,
+            r.s * q.screw.y - r.v.x * q.screw.z + r.v.y * q.screw.w + r.v.z * q.screw.x,
+            r.s * q.screw.w - r.v.x * q.screw.x - r.v.y * q.screw.y - r.v.z * q.screw.z
+        )
+    }
+});
+
+macro_rules! impl_scalar_ops {
+    ($S:ident) => {
+        impl_operator!(<$S> Mul<Motor<$S>> for $S {
+            fn mul(s, q) -> Motor<S> {
+                Motor::new(
+                    q.rotor.v.x * s, q.rotor.v.y * s, q.rotor.v.z * s, q.rotor.s * s,
+                    q.screw.v.x * s, q.screw.v.y * s, q.screw.v.z * s, q.screw.s * s
+                )
+            }
+        });
+    };
+}
+
+impl_scalar_ops!(f32);
+impl_scalar_ops!(f64);
+
+
+impl<S: NumCast + Copy> Motor<S> {
+    /// Component-wise casting to another type.
+    #[inline]
+    pub fn cast<T: NumCast>(&self) -> Option<Motor<T>> {
+        let rotor = match self.rotor.cast() {
+            Some(rotor) => rotor,
+            None => return None
+        };
+        let screw = match.self.screw.cast() {
+            Some(screw) => screw,
+            None => return None
+        }
+        Some(Motor { rotor: rotor, screw: screw})
+    }
+}
+
+impl<S: BaseFloat> approx::AbsDiffEq for Motor<S> {
+    type Epsilon = S::Epsilon;
+
+    #[inline]
+    fn default_epsilon() -> S::Epsilon {
+        S::default_epsilon()
+    }
+
+    #[inline]
+    fn abs_diff_eq(&self, other: &Self, epsilon: S::Epsilon) -> bool {
+        self.rotor.abs_diff_eq(&other.rotor, epsilon) &&
+        self.screw.abs_diff_eq(&other.screw, epsilon)
+    }
+}
+
+impl<S: BaseFloat> approx::RelativeEq for Motor<S> {
+    #[inline]
+    fn default_max_relative() -> S::Epsilon {
+        S::default_max_relative()
+    }
+
+    #[inline]
+    fn relative_eq(&self, other: &Self, epsilon: S::Epsilon, max_relative: S::Epsilon) -> bool {
+        self.rotor.relative_eq(&other.rotor, epsilon, max_relative) &&
+        self.screw.relative_eq(&other.screw, epsilon, max_relative)
+    }
+}
+
+impl<S: BaseFloat> approx::UlpsEq for Motor<S> {
+    #[inline]
+    fn default_max_ulps() -> u32 {
+        S::default_max_ulps()
+    }
+
+    #[inline]
+    fn ulps_eq(&self, other: &Self, epsilon: S::Epsilon, max_ulps: u32) -> bool {
+        self.rotor.ulps_eq(&other.rotor, epsilon, max_ulps) &&
+        self.screw.ulps_eq(&other.screw, epsilon, max_ulps)
+    }
+}
+
+#[cfg(feature = "rand")]
+impl<S> Distribution<Bivector4<S>> for Standard
+    where Standard: Distribution<S>,
+        S: BaseFloat {
+    #[inline]
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Motor<S> {
+        Motor{
+            rotor: self.sample(rng),
+            screw: self.sample(rng)
+        }
+    }
+}
+
+// todo simd
+impl_operator!(<S: BaseFloat> TransformTrait<Motor<S>> for Point3<S> {
+    fn transform(p, q) -> Point3<S> {
+        let rx = q.rotor.x;
+        let ry = q.rotor.y;
+        let rz = q.rotor.z;
+        let rw = q.rotor.w;
+        let ux = q.screw.x;
+        let uy = q.screw.y;
+        let uz = q.screw.z;
+        let uw = q.screw.w;
+    
+        let rx2 = rx * rx;
+        let ry2 = ry * ry;
+        let rz2 = rz * rz;
+        let rxy = rx * ry;
+        let rzx = rz * rx;
+        let ryz = ry * rz;
+    
+        Vector3D v = !q.screw.v + p * rw;
+    
+        Motor::new(
+            p.x + (ux * rw - rx * uw + (ry * v.z - rz * v.y) + p.y * rxy + p.z * rzx - p.x * (ry2 + rz2)) * 2.0F,
+            p.y + (uy * rw - ry * uw + (rz * v.x - rx * v.z) + p.x * rxy + p.z * ryz - p.y * (rz2 + rx2)) * 2.0F,
+            p.z + (uz * rw - rz * uw + (rx * v.y - ry * v.x) + p.x * rzx + p.y * ryz - p.z * (rx2 + ry2)) * 2.0F
+        )
+    }
+});
+
+impl_operator!(<S: BaseFloat> TransformTrait<Motor<S>> for Bivector4<S> {
+    fn transform(l, q) -> Bivector4<S> {
+        let rx = Q.rotor.x;
+        let ry = Q.rotor.y;
+        let rz = Q.rotor.z;
+        let rw = Q.rotor.w;
+        let ux = Q.screw.x;
+        let uy = Q.screw.y;
+        let uz = Q.screw.z;
+        let uw = Q.screw.w;
+
+        let rx2 = rx * rx;
+        let ry2 = ry * ry;
+        let rz2 = rz * rz;
+        let rxy = rx * ry;
+        let rzx = rz * rx;
+        let ryz = ry * rz;
+        let rwx = rw * rx;
+        let rwy = rw * ry;
+        let rwz = rw * rz;
+
+        let v: Vector3<S> = L.direction * rw;
+
+        Bivector3::new(L.direction.x + ((ry * v.z - rz * v.y) + L.direction.y * rxy + L.direction.z * rzx - L.direction.x * (ry2 + rz2)) * 2.0F,
+        L.direction.y + ((rz * v.x - rx * v.z) + L.direction.x * rxy + L.direction.z * ryz - L.direction.y * (rz2 + rx2)) * 2.0F,
+        L.direction.z + ((rx * v.y - ry * v.x) + L.direction.x * rzx + L.direction.y * ryz - L.direction.z * (rx2 + ry2)) * 2.0F,
+        L.moment.x + (L.moment.z * (rwy + rzx) - L.moment.y * (rwz + rxy) + L.direction.y * (ux * ry + uy * rx - uz * rw - rz * uw) + L.direction.z * (rz * ux + rw * uy + rx * uz + ry * uw) - L.direction.x * (uy * ry - uz * rz) * 2.0F - L.moment.x * (ry2 + rz2)) * 2.0F,
+        L.moment.y + (L.moment.x * (rwz + rxy) - L.moment.z * (rwx + ryz) + L.direction.z * (uy * rz + uz * ry - ux * rw - rx * uw) + L.direction.x * (ry * ux + rx * uy + rw * uz + rz * uw) - L.direction.y * (ux * rx - uz * rz) * 2.0F - L.moment.y * (rz2 + rx2)) * 2.0F,
+        L.moment.z + (L.moment.y * (rwx + ryz) - L.moment.x * (rwy + rzx) + L.direction.x * (uz * rx + ux * rz - uy * rw - ry * uw) + L.direction.y * (rw * ux + rz * uy + ry * uz + rx * uw) - L.direction.z * (ux * rx - uy * ry) * 2.0F - L.moment.z * (rx2 + ry2)) * 2.0F
+    )
+});
+
+impl_operator!(<S: BaseFloat> TransformTrait<Motor<S>> for Trivector4<S> {
+    fn transform(f, q) -> Trivector4<S> {
+        let rx = Q.rotor.x;
+        let ry = Q.rotor.y;
+        let rz = Q.rotor.z;
+        let rw = Q.rotor.w;
+        let ux = Q.screw.x;
+        let uy = Q.screw.y;
+        let uz = Q.screw.z;
+        let uw = Q.screw.w;
+
+        let rx2 = rx * rx;
+        let ry2 = ry * ry;
+        let rz2 = rz * rz;
+        let rxy = rx * ry;
+        let rzx = rz * rx;
+        let ryz = ry * rz;
+
+        let fr = f.x * rx + f.y * ry + f.z * rz;
+        let fu = f.x * ux + f.y * uy + f.z * uz;
+
+        Trivector4::new(f.x + ((ry * f.z - rz * f.y) * rw + f.y * rxy + f.z * rzx - f.x * (ry2 + rz2)) * 2.0F,
+            f.y + ((rz * f.x - rx * f.z) * rw + f.x * rxy + f.z * ryz - f.y * (rz2 + rx2)) * 2.0F,
+            f.z + ((rx * f.y - ry * f.x) * rw + f.x * rzx + f.y * ryz - f.z * (rx2 + ry2)) * 2.0F,
+            f.w + (fr * uw - fu * rw + f.x * (ry * uz - rz * uy) + f.y * (rz * ux - rx * uz) + f.z * (rx * uy - ry * ux)) * 2.0F
+        ）
+    }
+})
+
+
+
+/// todo simd
+// pub fn Transform<S: BaseFloat>(p: &Point3<S>, q: &Motor<S>) -> Point3<S> {
+//     let rx = q.rotor.x;
+//     let ry = q.rotor.y;
+//     let rz = q.rotor.z;
+//     let rw = q.rotor.w;
+//     let ux = q.screw.x;
+//     let uy = q.screw.y;
+//     let uz = q.screw.z;
+//     let uw = q.screw.w;
+
+//     let rx2 = rx * rx;
+//     let ry2 = ry * ry;
+//     let rz2 = rz * rz;
+//     let rxy = rx * ry;
+//     let rzx = rz * rx;
+//     let ryz = ry * rz;
+
+//     Vector3D v = !q.screw.v + p * rw;
+
+//     Motor::new(
+//         p.x + (ux * rw - rx * uw + (ry * v.z - rz * v.y) + p.y * rxy + p.z * rzx - p.x * (ry2 + rz2)) * 2.0F,
+//         p.y + (uy * rw - ry * uw + (rz * v.x - rx * v.z) + p.x * rxy + p.z * ryz - p.y * (rz2 + rx2)) * 2.0F,
+//         p.z + (uz * rw - rz * uw + (rx * v.y - ry * v.x) + p.x * rzx + p.y * ryz - p.z * (rx2 + ry2)) * 2.0F
+//     )
+// }
+
+pub fn 
+
 

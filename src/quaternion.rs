@@ -267,9 +267,53 @@ impl<S: BaseFloat> Quaternion<S> {
         let m00 = m.row_col(0, 0);
         let m11 = m.row_col(1,1);
         let m22 = m.row_col(2,2,);
-        match sum
-
+        let sum = m00 + m11 + m22;
+        let half: S = cast(0.5f32).unwrap();
+        let quarter: S = cast(0.25f32).unwrap();
+        let t = Float::sqrt(m22 - m00 - m11 + S::one()) * half;
+        if sum > S::zero() {
+            self.s = t;
+            let f = quarter / x;
+            self.v.x = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
+            self.v.y = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
+            self.v.z = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
+        } else if m00 > m11 && m00 > m22 {
+            self.v.x = t;
+            let f = quarter / x;
+            self.v.y = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
+            self.v.z = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
+            self.s = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
+        } else if m11 > m22 {
+            self.v.y = t;
+            let f = quarter / y;
+            self.v.x = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
+            self.v.z = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
+            self.s = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
+        } else {
+            self.v.z = t;
+            let f = quarter / self.v.z;
+            self.v.x = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
+            self.v.y = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
+            self.s = (m.row_col(1, 0) - m.row_col(0, 1)) * f;
+        }
     }
+
+    pub fn set_biv3_s<'a>(&'a mut self, v: &Bivector3<S>, s: S) -> &'a Quaternion<S> {
+        self.v.x = v.x;
+        self.v.y = v.y;
+        self.v.z = v.z;
+        self.s = s;
+        self
+    }
+
+    pub fn set<'a>(&'a mut self, x: S, y: S, z: S, s: S) ->'a Quaternion<S> {
+        self.v.x = x;
+        self.v.y = y;
+        self.v.z = z;
+        self.s = s;
+        self
+    }
+
 }
 
 
