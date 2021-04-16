@@ -13,7 +13,7 @@ This is a rust math library containing classes for vectors, matrices, quaternion
 |point2| A 2D point (*x*, *y*) that extends to four dimensions as (*x*, *y*, 0, 1).|
 |point3| A 3D point (*x*, *y*, *z*) that extends to four dimensions as (*x*, *y*, *z*, 1).|
 |matrix2| A 2×2 matrix.|
-|matrix3d| A 3×3 matrix.|
+|matrix3| A 3×3 matrix.|
 |matrix4| A 4×4 matrix.|
 |transform4| A 4×4 matrix with fourth row always (0, 0, 0, 1).|
 |quaternion| A convention quaternion x**i** + y**j** + z**k** + w.|
