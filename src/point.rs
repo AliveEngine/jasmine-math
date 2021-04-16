@@ -221,6 +221,9 @@ macro_rules! impl_point {
         impl_operator!(<S: BaseNum> Add<$VectorN<S> > for $PointN<S> {
             fn add(lhs, rhs) -> $PointN<S> { $PointN::new($(lhs.$field + rhs.$field),+) }
         });
+        impl_operator!(<S: BaseNum> Add<$PointN<S> > for $VectorN<S> {
+            fn add(lhs, rhs) -> $VectorN<S> { $VectorN::new($(lhs.$field + rhs.$field),+) }
+        });
         impl_operator!(<S: BaseNum> Sub<$VectorN<S>> for $PointN<S> {
             fn sub(lhs, rhs) -> $PointN<S> { $PointN::new($(lhs.$field - rhs.$field),+) }
         });

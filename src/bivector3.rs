@@ -355,22 +355,33 @@ impl<S: BaseNum> Zero for Bivector3<S> {
     }
 }
 
-impl<S:BaseNum> Not for Bivector3<S> {
-    type Output = Vector3<S>;
-
-    fn not(self) -> Vector3<S> {
-        Vector3{x: self.x, y : self.y, z: self.z} 
+impl_operator!(<S:BaseNum> Not for Bivector3<S> {
+    fn not(b) -> Vector3<S> {
+        Vector3{x: b.x, y : b.y, z: b.z} 
     }
-}
+});
 
+// impl<S:BaseNum> Not for Bivector3<S> {
+//     type Output = Vector3<S>;
 
-impl<S:BaseNum> Not for Vector3<S> {
-    type Output = Bivector3<S>;
+//     fn not(self) -> Vector3<S> {
+//         Vector3{x: self.x, y : self.y, z: self.z} 
+//     }
+// }
 
-    fn not(self) -> Bivector3<S> {
-        Bivector3{x: self.x, y : self.y, z: self.z} 
+impl_operator!(<S:BaseNum> Not for Vector3<S> {
+    fn not(v) -> Bivector3<S> {
+        Bivector3{x: v.x, y : v.y, z: v.z} 
     }
-}
+});
+
+// impl<S:BaseNum> Not for Vector3<S> {
+//     type Output = Bivector3<S>;
+
+//     fn not(self) -> Bivector3<S> {
+//         Bivector3{x: self.x, y : self.y, z: self.z} 
+//     }
+// }
 
 
 impl<S:BaseNum> ComplementTrait<Vector3<S>> for Bivector3<S> {

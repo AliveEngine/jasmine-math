@@ -52,14 +52,22 @@ impl<S> Quaternion<S> {
         Quaternion { s: s, v: v }
     }
 
-    #[inline]
-    pub fn set(&mut self, w: S, xi: S, yj: S, zk: S){
-        self.s = w;
-        self.v.x = xi;
-        self.v.y = yj;
-        self.v.z= zk;
-    }
+    // #[inline]
+    // pub fn set(&mut self, w: S, xi: S, yj: S, zk: S){
+    //     self.s = w;
+    //     self.v.x = xi;
+    //     self.v.y = yj;
+    //     self.v.z= zk;
+    // }
 
+    
+    pub fn set<'a>(&'a mut self, x: S, y: S, z: S, s: S) ->&'a Quaternion<S> {
+        self.v.x = x;
+        self.v.y = y;
+        self.v.z = z;
+        self.s = s;
+        self
+    }
 }
 
 impl<S: BaseFloat> Quaternion<S> {
@@ -271,21 +279,22 @@ impl<S: BaseFloat> Quaternion<S> {
         let half: S = cast(0.5f32).unwrap();
         let quarter: S = cast(0.25f32).unwrap();
         let t = Float::sqrt(m22 - m00 - m11 + S::one()) * half;
+        
         if sum > S::zero() {
             self.s = t;
-            let f = quarter / x;
+            let f = quarter / self.s;
             self.v.x = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
             self.v.y = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
             self.v.z = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
         } else if m00 > m11 && m00 > m22 {
             self.v.x = t;
-            let f = quarter / x;
+            let f = quarter / self.v.x;
             self.v.y = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
             self.v.z = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
             self.s = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
         } else if m11 > m22 {
             self.v.y = t;
-            let f = quarter / y;
+            let f = quarter / self.v.y;
             self.v.x = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
             self.v.z = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
             self.s = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
@@ -296,20 +305,13 @@ impl<S: BaseFloat> Quaternion<S> {
             self.v.y = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
             self.s = (m.row_col(1, 0) - m.row_col(0, 1)) * f;
         }
+        self
     }
 
     pub fn set_biv3_s<'a>(&'a mut self, v: &Bivector3<S>, s: S) -> &'a Quaternion<S> {
         self.v.x = v.x;
         self.v.y = v.y;
         self.v.z = v.z;
-        self.s = s;
-        self
-    }
-
-    pub fn set<'a>(&'a mut self, x: S, y: S, z: S, s: S) ->'a Quaternion<S> {
-        self.v.x = x;
-        self.v.y = y;
-        self.v.z = z;
         self.s = s;
         self
     }
@@ -602,8 +604,6 @@ impl_operator!(<S: BaseFloat> Add<S> for Quaternion<S> {
         Quaternion::new(q.v.x, q.v.y, q.v.z, q.s + s)
     }
 });
-
-
 
 impl_assignment_operator!(<S: BaseFloat> AddAssign<Quaternion<S> > for Quaternion<S> {
     fn add_assign(&mut self, other) { self.s += other.s; self.v += other.v; }
