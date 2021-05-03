@@ -254,7 +254,7 @@ impl<S: BaseFloat> Quaternion<S> {
         let y2 = self.v.y * self.v.y;
         let z2 = self.v.z * self.v.z;
         let xy = self.v.x * self.v.y;
-        let xz = self.v.x * self.v.z;
+        let zx = self.v.z * self.v.x;
         let yz = self.v.y * self.v.z;
         let wx = self.s * self.v.x;
         let wy = self.s * self.v.y;
@@ -262,9 +262,9 @@ impl<S: BaseFloat> Quaternion<S> {
     
         let two: S = cast(2.0f32).unwrap();
         Matrix3::new(
-            S::one() - two * (y2 + z2), two * (xy + wz), two * (xz - wy),
+            S::one() - two * (y2 + z2), two * (xy + wz), two * (zx - wy),
             two * (xy - wz), S::one() - two * (x2 + z2), two * (yz + wx),
-            two * (xz + wy), two * (yz - wx), S::one() - two * (x2 + y2)
+            two * (zx + wy), two * (yz - wx), S::one() - two * (x2 + y2)
         )
     }
 
@@ -278,28 +278,27 @@ impl<S: BaseFloat> Quaternion<S> {
         let sum = m00 + m11 + m22;
         let half: S = cast(0.5f32).unwrap();
         let quarter: S = cast(0.25f32).unwrap();
-        let t = Float::sqrt(m22 - m00 - m11 + S::one()) * half;
-        
+  
         if sum > S::zero() {
-            self.s = t;
+            self.s = Float::sqrt(sum + S::one()) * half;
             let f = quarter / self.s;
             self.v.x = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
             self.v.y = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
             self.v.z = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
         } else if m00 > m11 && m00 > m22 {
-            self.v.x = t;
+            self.v.x = Float::sqrt(m00 - m11 - m22 + S::one()) * half;
             let f = quarter / self.v.x;
             self.v.y = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
             self.v.z = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
             self.s = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
         } else if m11 > m22 {
-            self.v.y = t;
+            self.v.y = Float::sqrt(m11 - m22 - m00 + S::one()) * half;
             let f = quarter / self.v.y;
             self.v.x = (m.row_col(1, 0) + m.row_col(0, 1)) * f;
             self.v.z = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
             self.s = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
         } else {
-            self.v.z = t;
+            self.v.z = Float::sqrt(m22 - m00 - m11 + S::one()) * half;
             let f = quarter / self.v.z;
             self.v.x = (m.row_col(0, 2) + m.row_col(2, 0)) * f;
             self.v.y = (m.row_col(2, 1) + m.row_col(1, 2)) * f;
@@ -316,6 +315,13 @@ impl<S: BaseFloat> Quaternion<S> {
         self
     }
 
+    pub fn sqrt(&self) -> Quaternion<S> {
+        let two: S = cast(2.0f32).unwrap();
+        let f = S::one() / Float::sqrt(self.s * two + two);
+        Quaternion::new(
+            self.v.x * f, self.v.y * f, self.v.z * f, self.s * f + f
+        )
+    }
 }
 
 

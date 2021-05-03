@@ -22,7 +22,7 @@ use bivector3::{Bivector3, bivec3};
 use mint;
 
 #[repr(C)]
-#[derive(PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(PartialEq, Eq, Copy, Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Trivector4<S> {
     /// The x component of the vector.
@@ -193,7 +193,9 @@ macro_rules! impl_vector {
         impl_operator!(<S: BaseNum> Div<S> for $VectorN<S> {
             fn div(vector, scalar) -> $VectorN<S> { $VectorN::new($(vector.$field / scalar),+) }
         });           
-
+        impl_assignment_operator!(<S: BaseNum> DivAssign<S> for $VectorN<S> {
+            fn div_assign(&mut self, scalar) { $(self.$field /= scalar);+ }
+        });
         impl_scalar_ops!($VectorN<usize> { $($field),+ });
         impl_scalar_ops!($VectorN<u8> { $($field),+ });
         impl_scalar_ops!($VectorN<u16> { $($field),+ });

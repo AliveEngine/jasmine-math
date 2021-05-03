@@ -869,7 +869,6 @@ where
     fn complement(self) -> O;
 }
 
-pub trait TransformTrait<Rhs = Self> {
-    type Output;
-    fn transform(&self, rhs: &Rhs) -> Self::Output;
+pub trait TransformTrait<Rhs, Output> {
+    fn transform(&self, rhs: &Rhs) -> Output;
 }

@@ -35,7 +35,7 @@ use quaternion::Quaternion;
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Motor<S> {
+pub struct Motor4<S> {
     //## The coordinates of the rotor part consisting of the weight components using basis elements <b>e</b><sub>41</sub>, <b>e</b><sub>42</sub>, <b>e</b><sub>43</sub>, and <b>e</b><sub>1234</sub>.
     pub rotor: Quaternion<S>,
 
@@ -43,11 +43,11 @@ pub struct Motor<S> {
     pub screw: Quaternion<S>
 }
 
-impl<S> Motor<S> 
+impl<S> Motor4<S> 
 {
     #[inline]
-    pub const fn new(rx: S, ry: S, rz: S, rw: S, ux: S, uy: S, uz: S, uw: S) -> Motor<S> {
-        Motor {
+    pub const fn new(rx: S, ry: S, rz: S, rw: S, ux: S, uy: S, uz: S, uw: S) -> Motor4<S> {
+        Motor4 {
             rotor: Quaternion::new(rw, rx, ry, rz),
             screw: Quaternion::new(uw, ux, uy, uz)
         }
@@ -55,29 +55,29 @@ impl<S> Motor<S>
 
 }
 
-pub fn motor<S>() -> Motor<S> where S: NumCast{
-    Motor::new(cast(0).unwrap(), cast(0).unwrap(), cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap())
+pub fn motor<S>() -> Motor4<S> where S: NumCast{
+    Motor4::new(cast(0).unwrap(), cast(0).unwrap(), cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap(),cast(0).unwrap())
 }
 
-impl<S: BaseFloat> Motor<S> {
+impl<S: BaseFloat> Motor4<S> {
     #[inline]
-    pub fn from_quaternion(r: &Quaternion<S>) -> Motor<S> {
-        Motor {
+    pub fn from_quaternion(r: &Quaternion<S>) -> Motor4<S> {
+        Motor4 {
             rotor: Quaternion::new(r.s, r.v.x, r.v.y, r.v.z),
             screw: Quaternion::new(S::zero(), S::zero(), S::zero(), S::zero())
         }
     }
 
     #[inline]
-    pub fn from_r_u(r: &Quaternion<S>, u: &Quaternion<S>) -> Motor<S> {
-        Motor {
+    pub fn from_r_u(r: &Quaternion<S>, u: &Quaternion<S>) -> Motor4<S> {
+        Motor4 {
             rotor: Quaternion::new(r.s, r.v.x, r.v.y, r.v.z),
             screw: Quaternion::new(u.s, u.v.x, u.v.y, u.v.z)
         }
     }
 
     #[inline]
-    pub fn from_f_g(f: &Trivector4<S>, g: &Trivector4<S>) -> Motor<S> {
+    pub fn from_f_g(f: &Trivector4<S>, g: &Trivector4<S>) -> Motor4<S> {
         let r: Quaternion<S> = Quaternion::new(
             f.x * g.x + f.y * g.y + f.z * g.z,
             f.y * g.z - f.z * g.y, f.z * g.x - f.x * g.z, f.x * g.y - f.y * g.x
@@ -86,22 +86,22 @@ impl<S: BaseFloat> Motor<S> {
             S::zero(),
             f.w * g.x - f.x * g.w, f.w * g.y - f.y * g.w, f.w * g.z - f.z * g.w
         );
-        Motor::from_r_u(&r, &u)
+        Motor4::from_r_u(&r, &u)
     }
 
     #[inline]
-    pub fn from_K_L(K: &Bivector4<S>, L: &Bivector4<S>) -> Motor<S> {
+    pub fn from_K_L(K: &Bivector4<S>, L: &Bivector4<S>) -> Motor4<S> {
         let r_v3 = K.direction ^ L.direction;
         let r_s = -K.direction.dot(L.direction);
         let u_v3 = (L.direction ^ !K.moment) - (K.direction ^ !L.moment);
         let u_s = -(L.direction ^ K.moment) - (K.direction ^ L.moment);
         let r = Quaternion::from_sv(r_s, r_v3);
         let u = Quaternion::from_sv(u_s, u_v3);
-        Motor::from_r_u(&r, &u)
+        Motor4::from_r_u(&r, &u)
     }
 
     #[inline]
-    pub fn from_points(p: &Point3<S>, q: &Point3<S>) -> Motor<S> {
+    pub fn from_points(p: &Point3<S>, q: &Point3<S>) -> Motor4<S> {
         let r: Quaternion<S> = Quaternion::new(
             S::zero(), S::zero(), S::zero(), S::zero(), 
         );
@@ -109,32 +109,32 @@ impl<S: BaseFloat> Motor<S> {
             S::zero(),
             p.x - q.x, p.y - q.y, p.z - q.z
         );
-        Motor::from_r_u(&r, &u)
+        Motor4::from_r_u(&r, &u)
     }
 
     #[inline]
-    pub fn from_rotation(r: Rad<S>, axis: &Bivector3<S>) -> Motor<S> {
+    pub fn from_rotation(r: Rad<S>, axis: &Bivector3<S>) -> Motor4<S> {
         let (s, c) = Rad::sin_cos(r);
-        Motor::new(
+        Motor4::new(
             axis.x * s, axis.y * s, axis.z * s, c,
             S::zero(), S::zero(), S::zero(), S::zero()
         )
     }
 
     #[inline]
-    pub fn from_translation(offset: &Vector3<S>) -> Motor<S> {
+    pub fn from_translation(offset: &Vector3<S>) -> Motor4<S> {
         let half = cast(0.5f32).unwrap();
-        Motor::new(
+        Motor4::new(
             S::zero(), S::zero(), S::zero(), S::one(),
             offset.x * half, offset.y * half, offset.z * half, S::zero()
         )        
     }
 
     #[inline]
-    pub fn from_screw(r: Rad<S>, axis: &Bivector4<S>, disp: S) -> Motor<S> {
+    pub fn from_screw(r: Rad<S>, axis: &Bivector4<S>, disp: S) -> Motor4<S> {
         let half = cast(0.5f32).unwrap();
         let (s, c) = Rad::sin_cos(r * half);
-        Motor::new(
+        Motor4::new(
             axis.direction.x * s, axis.direction.y * s, axis.direction.z * s, 
             c, disp * axis.direction.x * c + axis.moment.x * s, disp * axis.direction.y * c + axis.moment.y * s, disp * axis.direction.z * c + axis.moment.z * s, -disp * s
         )
@@ -168,7 +168,7 @@ impl<S: BaseFloat> Motor<S> {
         Transform4::from_mat3_vec3(&m, &v3)
     }
 
-    pub fn set_transform_matrix<'a>(&'a mut self, m: &Transform4<S>) -> &'a Motor<S> {
+    pub fn set_transform_matrix<'a>(&'a mut self, m: &Transform4<S>) -> &'a Motor4<S> {
         self.rotor.set_rotation_matrix(&m.matrix);
         let r = &self.rotor.v;
         let half: S = cast(0.5f32).unwrap();
@@ -182,8 +182,8 @@ impl<S: BaseFloat> Motor<S> {
 }
 
 /// util functions.
-impl<S: BaseFloat> Motor<S> {
-    pub fn untize<'a>(&'a mut self) -> &'a Motor<S> {
+impl<S: BaseFloat> Motor4<S> {
+    pub fn untize<'a>(&'a mut self) -> &'a Motor4<S> {
         *self *= self.rotor.inverse_mag();
         self
     }
@@ -191,35 +191,35 @@ impl<S: BaseFloat> Motor<S> {
 
 }
 
-impl_assignment_operator!(<S: BaseFloat> AddAssign<Motor<S>> for Motor<S> {
+impl_assignment_operator!(<S: BaseFloat> AddAssign<Motor4<S>> for Motor4<S> {
     fn add_assign(&mut self, q) {
         self.rotor += q.rotor;
         self.screw += q.screw;
     }
 });
 
-impl_assignment_operator!(<S: BaseFloat> SubAssign<Motor<S>> for Motor<S> {
+impl_assignment_operator!(<S: BaseFloat> SubAssign<Motor4<S>> for Motor4<S> {
     fn sub_assign(&mut self, q) {
         self.rotor -= q.rotor;
         self.screw -= q.screw;
     }
 });
 
-impl_assignment_operator!(<S: BaseFloat> MulAssign<Motor<S>> for Motor<S> {
+impl_assignment_operator!(<S: BaseFloat> MulAssign<Motor4<S>> for Motor4<S> {
     fn mul_assign(&mut self, Q) {
         self.rotor *= Q.rotor;
         self.screw *= Q.screw;
     }
 });
 
-impl_assignment_operator!(<S: BaseFloat> MulAssign<S> for Motor<S> {
+impl_assignment_operator!(<S: BaseFloat> MulAssign<S> for Motor4<S> {
     fn mul_assign(&mut self, s) {
         self.rotor *= s;
         self.screw *= s;
     }
 });
 
-impl_assignment_operator!(<S: BaseFloat> DivAssign<S> for Motor<S> {
+impl_assignment_operator!(<S: BaseFloat> DivAssign<S> for Motor4<S> {
     fn div_assign(&mut self, s) {
         self.rotor *= s;
         self.screw *= s;
@@ -227,9 +227,9 @@ impl_assignment_operator!(<S: BaseFloat> DivAssign<S> for Motor<S> {
 });
 
 /// Returns the antireverse of the motor 
-impl_operator!(<S: BaseFloat> Not for Motor<S> {
-    fn not(q) -> Motor<S> {
-        Motor::new(
+impl_operator!(<S: BaseFloat> Not for Motor4<S> {
+    fn not(q) -> Motor4<S> {
+        Motor4::new(
             -q.rotor.v.x, -q.rotor.v.y, - q.rotor.v.z, -q.rotor.s,
             -q.screw.v.x, -q.screw.v.y, -q.screw.v.z, q.screw.s
         )
@@ -237,54 +237,54 @@ impl_operator!(<S: BaseFloat> Not for Motor<S> {
 });
 
 /// Returns the negation of the motor 
-impl_operator!(<S: BaseFloat> Neg for Motor<S> {
-    fn neg(q) -> Motor<S> {
-        Motor::new(
+impl_operator!(<S: BaseFloat> Neg for Motor4<S> {
+    fn neg(q) -> Motor4<S> {
+        Motor4::new(
             -q.rotor.v.x, -q.rotor.v.y, - q.rotor.v.z, -q.rotor.s,
             -q.screw.v.x, -q.screw.v.y, -q.screw.v.z, -q.screw.s
         )
     }
 });
 
-impl_operator!(<S: BaseFloat> Add<Motor<S>> for Motor<S> {
-    fn add(a, b) -> Motor<S> {
-        Motor::from_r_u(
+impl_operator!(<S: BaseFloat> Add<Motor4<S>> for Motor4<S> {
+    fn add(a, b) -> Motor4<S> {
+        Motor4::from_r_u(
             &(a.rotor + b.rotor),
             &(a.screw + b.screw)
         )
     }
 });
 
-impl_operator!(<S: BaseFloat> Sub<Motor<S>> for Motor<S> {
-    fn sub(a, b) -> Motor<S> {
-        Motor::from_r_u(
+impl_operator!(<S: BaseFloat> Sub<Motor4<S>> for Motor4<S> {
+    fn sub(a, b) -> Motor4<S> {
+        Motor4::from_r_u(
             &(a.rotor - b.rotor),
             &(a.screw - b.screw)
         )
     }
 });
 
-impl_operator!(<S: BaseFloat> Mul<S> for Motor<S> {
-    fn mul(q, s) -> Motor<S> {
-        Motor::new(
+impl_operator!(<S: BaseFloat> Mul<S> for Motor4<S> {
+    fn mul(q, s) -> Motor4<S> {
+        Motor4::new(
             q.rotor.v.x * s, q.rotor.v.y * s, q.rotor.v.z * s, q.rotor.s * s,
             q.screw.v.x * s, q.screw.v.y * s, q.screw.v.z * s, q.screw.s * s
         )
     }
 });
 
-impl_operator!(<S: BaseFloat> Div<S> for Motor<S> {
-    fn div(q, s) -> Motor<S> {
-        Motor::new(
+impl_operator!(<S: BaseFloat> Div<S> for Motor4<S> {
+    fn div(q, s) -> Motor4<S> {
+        Motor4::new(
             q.rotor.v.x / s, q.rotor.v.y / s, q.rotor.v.z / s, q.rotor.s / s,
             q.screw.v.x / s, q.screw.v.y / s, q.screw.v.z / s, q.screw.s / s
         )
     }
 });
 
-impl_operator!(<S: BaseFloat> Mul<Quaternion<S>> for Motor<S> {
-    fn mul(q, r) -> Motor<S> {
-        Motor::new(
+impl_operator!(<S: BaseFloat> Mul<Quaternion<S>> for Motor4<S> {
+    fn mul(q, r) -> Motor4<S> {
+        Motor4::new(
             q.rotor.s * r.v.x + q.rotor.v.x * r.s + q.rotor.v.y * r.v.z - q.rotor.v.z * r.v.y,
             q.rotor.s * r.v.y - q.rotor.v.x * r.v.z + q.rotor.v.y * r.s + q.rotor.v.z * r.v.x,
             q.rotor.s * r.v.z + q.rotor.v.x * r.v.y - q.rotor.v.y * r.v.x + q.rotor.v.z * r.s,
@@ -298,9 +298,9 @@ impl_operator!(<S: BaseFloat> Mul<Quaternion<S>> for Motor<S> {
 });
 
 
-impl_operator!(<S: BaseFloat> Mul<Motor<S>> for Quaternion<S> {
-    fn mul(r, q) -> Motor<S> {
-        Motor::new(
+impl_operator!(<S: BaseFloat> Mul<Motor4<S>> for Quaternion<S> {
+    fn mul(r, q) -> Motor4<S> {
+        Motor4::new(
             r.s * q.rotor.v.x + r.v.x * q.rotor.s + r.v.y * q.rotor.v.z - r.v.z * q.rotor.v.y,
             r.s * q.rotor.v.y - r.v.x * q.rotor.v.z + r.v.y * q.rotor.s + r.v.z * q.rotor.v.x,
             r.s * q.rotor.v.z + r.v.x * q.rotor.v.y - r.v.y * q.rotor.v.x + r.v.z * q.rotor.s,
@@ -327,14 +327,14 @@ macro_rules! impl_scalar_ops {
 }
 
 
-impl_scalar_ops!(Motor<f32>);
-impl_scalar_ops!(Motor<f64>);
+impl_scalar_ops!(Motor4<f32>);
+impl_scalar_ops!(Motor4<f64>);
 
 
-impl<S: NumCast + Copy> Motor<S> {
+impl<S: NumCast + Copy> Motor4<S> {
     /// Component-wise casting to another type.
     #[inline]
-    pub fn cast<T: NumCast + BaseFloat>(&self) -> Option<Motor<T>> {
+    pub fn cast<T: NumCast + BaseFloat>(&self) -> Option<Motor4<T>> {
         let rotor: Quaternion<T> = match self.rotor.cast() {
             Some(rotor) => rotor,
             None => return None
@@ -343,11 +343,11 @@ impl<S: NumCast + Copy> Motor<S> {
             Some(screw) => screw,
             None => return None
         };
-        Some(Motor { rotor: rotor, screw: screw})
+        Some(Motor4 { rotor: rotor, screw: screw})
     }
 }
 
-impl<S: BaseFloat> approx::AbsDiffEq for Motor<S> {
+impl<S: BaseFloat> approx::AbsDiffEq for Motor4<S> {
     type Epsilon = S::Epsilon;
 
     #[inline]
@@ -362,7 +362,7 @@ impl<S: BaseFloat> approx::AbsDiffEq for Motor<S> {
     }
 }
 
-impl<S: BaseFloat> approx::RelativeEq for Motor<S> {
+impl<S: BaseFloat> approx::RelativeEq for Motor4<S> {
     #[inline]
     fn default_max_relative() -> S::Epsilon {
         S::default_max_relative()
@@ -375,7 +375,7 @@ impl<S: BaseFloat> approx::RelativeEq for Motor<S> {
     }
 }
 
-impl<S: BaseFloat> approx::UlpsEq for Motor<S> {
+impl<S: BaseFloat> approx::UlpsEq for Motor4<S> {
     #[inline]
     fn default_max_ulps() -> u32 {
         S::default_max_ulps()
@@ -389,12 +389,12 @@ impl<S: BaseFloat> approx::UlpsEq for Motor<S> {
 }
 
 #[cfg(feature = "rand")]
-impl<S> Distribution<Motor<S>> for Standard
+impl<S> Distribution<Motor4<S>> for Standard
     where Standard: Distribution<Quaternion<S>>,
         S: BaseFloat {
     #[inline]
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Motor<S> {
-        Motor{
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Motor4<S> {
+        Motor4{
             rotor: self.sample(rng),
             screw: self.sample(rng)
         }
@@ -402,9 +402,9 @@ impl<S> Distribution<Motor<S>> for Standard
 }
 
 // todo simd
-impl<S: BaseFloat> TransformTrait<Motor<S>> for Point3<S> {
-    type Output = Point3<S>;
-    fn transform(&self, q: &Motor<S>) -> Point3<S> {
+impl<S: BaseFloat> TransformTrait<Motor4<S>, Point3<S>> for Point3<S> {
+
+    fn transform(&self, q: &Motor4<S>) -> Point3<S> {
         let rx = q.rotor.v.x;
         let ry = q.rotor.v.y;
         let rz = q.rotor.v.z;
@@ -431,10 +431,9 @@ impl<S: BaseFloat> TransformTrait<Motor<S>> for Point3<S> {
     }
 }
 
-impl<S: BaseFloat> TransformTrait<Motor<S>> for Bivector4<S> {
-    type Output = Bivector4<S>;
+impl<S: BaseFloat> TransformTrait<Motor4<S>, Bivector4<S>> for Bivector4<S> {
 
-    fn transform(&self, q: &Motor<S>) -> Bivector4<S> {
+    fn transform(&self, q: &Motor4<S>) -> Bivector4<S> {
         let rx = q.rotor.v.x;
         let ry = q.rotor.v.y;
         let rz = q.rotor.v.z;
@@ -467,9 +466,9 @@ impl<S: BaseFloat> TransformTrait<Motor<S>> for Bivector4<S> {
     }
 }
 
-impl<S: BaseFloat> TransformTrait<Motor<S>> for Trivector4<S> {
-    type Output = Trivector4<S>;
-    fn transform(&self, q: &Motor<S>) -> Trivector4<S> {
+impl<S: BaseFloat> TransformTrait<Motor4<S>, Trivector4<S>> for Trivector4<S> {
+ 
+    fn transform(&self, q: &Motor4<S>) -> Trivector4<S> {
         let rx = q.rotor.v.x;
         let ry = q.rotor.v.y;
         let rz = q.rotor.v.z;
